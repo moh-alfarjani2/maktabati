@@ -42,7 +42,7 @@ class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
 class PurchaseInvoiceCreateView(LoginRequiredMixin, CreateView):
     model = PurchaseInvoice
     template_name = 'purchases/invoice_form.html'
-    fields = ['supplier', 'payment_method', 'notes']
+    fields = ['supplier', 'invoice_date', 'payment_method', 'notes']
     success_url = reverse_lazy('invoice_list')
 
     def get_context_data(self, **kwargs):
@@ -91,7 +91,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, CreateView):
 class PurchaseInvoiceUpdateView(LoginRequiredMixin, UpdateView):
     model = PurchaseInvoice
     template_name = 'purchases/invoice_form.html'
-    fields = ['supplier', 'payment_method', 'notes']
+    fields = ['supplier', 'invoice_date', 'payment_method', 'notes']
     success_url = reverse_lazy('invoice_list')
 
     def get_object(self, queryset=None):
