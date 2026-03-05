@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}إعدادات النظام - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">إعدادات النظام</h3>
+        <a href="{% url 'backup' %}" class="btn btn-outline-success">
+            <i class="fas fa-download me-1"></i> تحميل نسخة احتياطية
+        </a>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 mb-4 h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-cog me-2 text-primary"></i> إعدادات النظام الأساسية
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        {% for setting in settings_list %}
+                            {% if setting.key != 'navbar_config' %}
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ setting.description|default:setting.key }}</label>
+                                    {% if setting.value_type == 'text' or setting.value_type == 'integer' %}
+                                        <input type="text"
+                                               name="{{ setting.key }}"
+                                               value="{{ setting.value }}"
+                                               class="form-control">
+                                    {% elif setting.value_type == 'boolean' %}
+                                        <select name="{{ setting.key }}" class="form-select">
+                                            <option value="True" {% if setting.value == 'True' %}selected{% endif %}>مفعل</option>
+                                            <option value="False" {% if setting.value == 'False' %}selected{% endif %}>معطل</option>
+                                        </select>
+                                    {% endif %}
+                                    <small class="text-muted">مفتاح الإعداد: <code>{{ setting.key }}</code></small>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <!-- Navbar Management -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-stream me-2 text-primary"></i> ترتيب القائمة العلوية
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">اسحب العناصر لترتيب ظهورها. العناصر في الأسفل ستختفي أولاً في قائمة "المزيد".</p>
+                        <ul class="list-group mb-3" id="navbarOrderList">
+                            {% for item in navbar_items %}
+                                <li class="list-group-item d-flex align-items-center cursor-move py-2"
+                                    data-id="{{ item.url }}">
+                                    <i class="fas fa-grip-vertical me-3 text-muted"></i>
+                                    <i class="{{ item.icon }} me-2 text-primary"
+                                       style="width: 20px;
+                                              text-align: center"></i>
+                                    <span class="small">{{ item.name }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <input type="hidden" name="navbar_config" id="navbarConfigInput">
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="fas fa-save me-2"></i> حفظ التغييرات هامة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="fas fa-info-circle me-1"></i> معلومات
+                        </h5>
+                        <p class="small text-muted mb-4">
+                            تتحكم هذه الإعدادات في مظهر ووظائف النظام الأساسية. يرجى الحذر عند تعديل القيم لتجنب المشاكل.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const el = document.getElementById('navbarOrderList');
+        const configInput = document.getElementById('navbarConfigInput');
+        
+        const sortable = Sortable.create(el, {
+            animation: 150,
+            ghostClass: 'bg-light',
+            onEnd: function() {
+                const order = [];
+                el.querySelectorAll('li').forEach(li => {
+                    order.push(li.dataset.id);
+                });
+                configInput.value = JSON.stringify({ order: order });
+            }
+        });
+
+        // Initialize input value
+        const initialOrder = [];
+        el.querySelectorAll('li').forEach(li => {
+            initialOrder.push(li.dataset.id);
+        });
+        configInput.value = JSON.stringify({ order: initialOrder });
+    });
+    </script>
+    <style>
+    .cursor-move { cursor: move; }
+    .list-group-item:hover { background-color: #f8f9fa; }
+    </style>
+{% endblock %}

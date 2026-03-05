@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}التقارير والإحصائيات - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">التقارير والإحصائيات</h3>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة التقرير
+            </button>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">المبيعات (30 يوم)</div>
+                        <h4 class="mb-0 fw-bold">{{ total_sales_30 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-success text-white p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">الربح الصافي</div>
+                        <h4 class="mb-0 fw-bold">{{ total_profit_30 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-info text-white p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">الفواتير (30 يوم)</div>
+                        <h4 class="mb-0 fw-bold">{{ total_invoices_30 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-dark-50 small">منخفض المخزون</div>
+                        <h4 class="mb-0 fw-bold">{{ low_stock_count }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-danger text-white p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">نفدت الكمية</div>
+                        <h4 class="mb-0 fw-bold">{{ out_of_stock_count }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <!-- Sales Chart -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">توجه المبيعات (آخر 7 أيام)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Top Selling Books -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">الأكثر مبيعاً</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for book in top_books %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-4 py-3">
+                                <div>
+                                    <div class="fw-bold">{{ book.product__name }}</div>
+                                    <small class="text-muted">{{ book.total_qty }} نسخة مباعة</small>
+                                </div>
+                                <div class="text-primary fw-bold">{{ book.total_revenue }} SAR</div>
+                            </div>
+                        {% empty %}
+                            <div class="p-4 text-center text-muted">لا توجد بيانات متاحة</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'المبيعات اليومية',
+                data: {{ chart_values|safe }},
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#4e73df'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' SAR';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}إضافة دور - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">تعريف دور جديد</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label">اسم الدور (مثلاً: كاشير، مدير مخزن)</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">حفظ الدور</button>
+                            <a href="{% url 'role_list' %}" class="btn btn-light">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

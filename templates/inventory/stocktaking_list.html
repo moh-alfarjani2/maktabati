@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}عمليات الجرد - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>عمليات جرد المخزون (Audits)</h3>
+        <a href="{% url 'stocktaking_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> بدء عملية جرد جديدة
+        </a>
+    </div>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">التاريخ</th>
+                            <th>اسم العملية</th>
+                            <th>بواسطة</th>
+                            <th>الحالة</th>
+                            <th class="text-end pe-4">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for audit in audits %}
+                            <tr>
+                                <td class="ps-4">{{ audit.started_at|date:"Y-m-d H:i" }}</td>
+                                <td class="fw-bold">{{ audit.session_name }}</td>
+                                <td>{{ audit.conducted_by.get_full_name|default:audit.conducted_by.username }}</td>
+                                <td>
+                                    {% if audit.is_completed %}
+                                        <span class="badge bg-success">مكتمل</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">قيد التنفيذ</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'stocktaking_detail' audit.pk %}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> التفاصيل
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">لا توجد عمليات جرد مسجلة حتى الآن</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

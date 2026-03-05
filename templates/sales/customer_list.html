@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}إدارة العملاء - POS الاحترافي{% endblock %}
+{% block content %}
+    <div class="container-fluid fade-in">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">العملاء</h3>
+                <p class="text-muted small mb-0">إدارة بيانات العملاء، المديونيات، وتتبع المشتريات.</p>
+            </div>
+            <a href="{% url 'customer_add' %}"
+               class="btn btn-primary btn-sm px-4 shadow-sm">
+                <i class="fas fa-user-plus me-1"></i> إضافة عميل جديد
+            </a>
+        </div>
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-2">
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                            <input type="text"
+                                   name="q"
+                                   class="form-control border-start-0"
+                                   placeholder="ابحث باسم العميل أو رقم الجوال..."
+                                   value="{{ request.GET.q }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">بحث</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4">اسم العميل</th>
+                            <th>رقم الجوال</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الرصيد المستحق</th>
+                            <th>تاريخ التسجيل</th>
+                            <th class="pe-4 text-end">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for customer in customers %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3"
+                                             style="width: 40px;
+                                                    height: 40px">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="fw-bold text-dark">{{ customer.name }}</div>
+                                    </div>
+                                </td>
+                                <td>{{ customer.phone|default:"-" }}</td>
+                                <td>{{ customer.email|default:"-" }}</td>
+                                <td>
+                                    {% if customer.balance_due > 0 %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger fw-bold">{{ customer.balance_due|intcomma }} SAR</span>
+                                    {% else %}
+                                        <span class="text-success small fw-bold">لا يوجد مديونية</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-muted">{{ customer.created_at|date:"Y-m-d" }}</td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group">
+                                        <a href="#" class="btn btn-sm btn-light border" title="تعديل"><i class="fas fa-edit text-primary"></i></a>
+                                        <a href="#" class="btn btn-sm btn-light border" title="كشف حساب"><i class="fas fa-file-invoice text-info"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="opacity-25 mb-3">
+                                        <i class="fas fa-users fa-4x"></i>
+                                    </div>
+                                    <h5 class="text-muted">لم يتم العثور على عملاء</h5>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

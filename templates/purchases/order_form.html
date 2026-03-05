@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}طلب شراء جديد - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">إنشاء طلب شراء</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">المورد</label>
+                            <select name="supplier" class="form-select" required>
+                                <option value="">اختر المورد...</option>
+                                {% for supplier in form.fields.supplier.queryset %}
+                                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">ملاحظات إضافية</label>
+                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i> ملاحظة: يمكنك إضافة الكتب والكميات في الخطوة القادمة من شاشة تفاصيل الطلب.
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'order_list' %}" class="btn btn-light me-2">إلغاء</a>
+                            <button type="submit" class="btn btn-primary px-5">إنشاء المسودة وبدء الإضافة</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

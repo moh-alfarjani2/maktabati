@@ -1,0 +1,368 @@
+:root {
+    --primary-color: #4f46e5;
+    --primary-dark: #4338ca;
+    --secondary-color: #1a1d2e;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --bg-light: #f8f9fa;
+    --text-main: #1f2937;
+    --sidebar-width: 260px;
+    --topbar-height: 64px;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    direction: rtl;
+    overflow-x: hidden;
+}
+
+/* Preloader Styles - Premium Fixed */
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #0f172a; /* Deeper dark background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    transition: all 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.premium-spinner {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    display: block;
+}
+
+.premium-spinner:before, .premium-spinner:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 4px solid transparent;
+    border-radius: 50%;
+}
+
+.premium-spinner:before {
+    border-top-color: var(--primary-color);
+    animation: premium-spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.premium-spinner:after {
+    border-bottom-color: var(--primary-color);
+    animation: premium-spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) reverse infinite;
+    opacity: 0.5;
+}
+
+@keyframes premium-spin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.preloader-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: scale(1.1); /* Slight expand for "dissolve" feel */
+}
+
+/* Blur effect for content when loading */
+#wrapper.loading {
+    filter: blur(15px);
+    opacity: 0;
+    transition: all 0.8s ease;
+}
+
+.preloader-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Blur effect for content when loading */
+#wrapper.loading {
+    filter: blur(10px);
+    transition: filter 0.5s ease;
+}
+
+/* Layout */
+#wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
+/* Layout Updates for Top Navbar */
+#sidebar {
+    display: none !important; /* Force hide sidebar */
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+}
+
+#wrapper {
+    display: block; /* Change from flex to block for vertical stack */
+    width: 100%;
+}
+
+#content {
+    width: 100% !important;
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+    transition: all 0.3s;
+    margin-right: 0 !important; 
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+}
+
+#content.full-width {
+    margin-right: 0 !important;
+}
+
+/* Premium Top Navbar Styles */
+.main-navbar-top {
+    font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+    padding: 0.25rem 1rem;
+    background: #1a1d2e !important; 
+    border-bottom: 2px solid var(--primary-color);
+    position: sticky;
+    top: 0;
+    z-index: 1050; /* Ensure it's above everything */
+    width: 100%;
+}
+
+.navbar-brand span {
+    font-size: 1.1rem;
+    letter-spacing: -0.5px;
+}
+
+/* Compact Navigation items */
+.nav-compact .nav-item {
+    margin: 0 2px;
+}
+
+.nav-compact .nav-link {
+    color: #cbd5e1 !important;
+    font-size: 0.88rem; /* Slightly larger for better readability */
+    font-weight: 500;
+    padding: 0.6rem 1.2rem !important; /* Increased horizontal padding */
+    border-radius: 8px; /* Softer corners */
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Increased gap between icon and text */
+}
+
+.nav-compact .nav-link i {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Professional Active/Hover State */
+.nav-compact .nav-link:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.nav-compact .nav-link.active {
+    color: #fff !important;
+    background: var(--primary-color) !important;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+}
+
+/* Ensure user profile doesn't shrink and remains stable for measurement */
+#userProfileDropdown {
+    flex-shrink: 0 !important;
+    margin-right: 1rem !important;
+    margin-left: 0 !important;
+    padding-right: 1.5rem !important;
+    padding-left: 0 !important;
+    white-space: nowrap !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[dir="rtl"] #userProfileDropdown {
+    border-left: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin-left: 1.5rem !important;
+    margin-right: 0 !important;
+    padding-left: 1.5rem !important;
+    padding-right: 0 !important;
+}
+/* Dropdown styling */
+.dropdown-menu {
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.dropdown-item {
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: var(--primary-color);
+    color: white !important;
+}
+
+/* Sidebar styles removed as they are no longer used */
+
+ul.components {
+    padding: 20px 0;
+}
+
+ul li a {
+    padding: 12px 20px;
+    font-size: 1rem;
+    display: block;
+    color: #cbd5e1;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+ul li a:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+}
+
+ul li.active > a {
+    color: #fff;
+    background: var(--primary-color);
+}
+
+ul li a i {
+    margin-left: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+/* POS Specific styles */
+.pos-container {
+    display: flex;
+    height: calc(100vh - var(--topbar-height) - 40px);
+    gap: 20px;
+}
+
+.pos-products {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.pos-cart {
+    width: 400px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Offcanvas Mobile Styles */
+.offcanvas {
+    width: 280px !important;
+    z-index: 1100 !important;
+}
+
+@media (min-width: 768px) {
+    .offcanvas {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    /* Anti-flicker: ensure scroll-lock is removed on desktop resize */
+    body.offcanvas-open {
+        overflow: auto !important;
+        padding-right: 0 !important;
+    }
+    .offcanvas-backdrop {
+        display: none !important;
+    }
+}
+
+.offcanvas .list-group-item {
+    transition: 0.3s;
+    font-family: 'Noto Sans Arabic', sans-serif;
+}
+
+.offcanvas .list-group-item:hover {
+    background: rgba(var(--primary-color-rgb), 0.1) !important;
+}
+
+.offcanvas .list-group-item.active {
+    background: var(--primary-color) !important;
+    border-right: 4px solid #fff !important;
+}
+
+/* Dropdown Active States */
+.dropdown-item.active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Priority Nav JS helper */
+#dynamicNavItems {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow: visible !important; /* Allow JS to measure overflow before hiding */
+    height: 100%;
+    align-items: center;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    gap: 4px;
+}
+
+/* Ensure navbar items have zero shrinkage to maintain precise widths for measurement */
+#dynamicNavItems .nav-item {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Ensure navbar brand doesn't shrink too much */
+.navbar-brand {
+    flex-shrink: 0;
+}
+
+/* RTL Helpers */
+.ms-auto { margin-right: auto !important; margin-left: unset !important; }
+.me-auto { margin-left: auto !important; margin-right: unset !important; }
+
+/* Custom Scrollbar for premium feel */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

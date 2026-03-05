@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}تقرير المبيعات - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">تقرير المبيعات التفصيلي</h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'reports_dashboard' %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-1"></i> رجوع للتقارير
+            </a>
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+        </div>
+    </div>
+    <!-- Filter Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">من تاريخ</label>
+                    <input type="date"
+                           name="date_from"
+                           class="form-control"
+                           value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">إلى تاريخ</label>
+                    <input type="date"
+                           name="date_to"
+                           class="form-control"
+                           value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">طريقة الدفع</label>
+                    <select name="payment_method" class="form-select">
+                        <option value="">الكل</option>
+                        <option value="cash"
+                                {% if request.GET.payment_method == 'cash' %}selected{% endif %}>نقداً</option>
+                        <option value="card"
+                                {% if request.GET.payment_method == 'card' %}selected{% endif %}>بطاقة</option>
+                        <option value="credit"
+                                {% if request.GET.payment_method == 'credit' %}selected{% endif %}>آجل</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> تصفية
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3">
+                <div class="text-white-50 small">إجمالي المبيعات</div>
+                <h4 class="mb-0 fw-bold">{{ total_sales|default:"0.00" }} SAR</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-success text-white p-3">
+                <div class="text-white-50 small">عدد الفواتير</div>
+                <h4 class="mb-0 fw-bold">{{ invoice_count|default:"0" }}</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-info text-white p-3">
+                <div class="text-white-50 small">إجمالي الضريبة</div>
+                <h4 class="mb-0 fw-bold">{{ total_tax|default:"0.00" }} SAR</h4>
+            </div>
+        </div>
+    </div>
+    <!-- Invoices Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-file-invoice me-2 text-primary"></i> سجل الفواتير
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>العميل</th>
+                            <th>الكاشير</th>
+                            <th>طريقة الدفع</th>
+                            <th>المجموع</th>
+                            <th>الضريبة</th>
+                            <th>الإجمالي</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">{{ invoice.invoice_number }}</strong>
+                                </td>
+                                <td>{{ invoice.customer.name|default:"نقدي" }}</td>
+                                <td>{{ invoice.cashier.get_full_name|default:invoice.cashier.username }}</td>
+                                <td>{{ invoice.get_payment_method_display }}</td>
+                                <td>{{ invoice.subtotal }} SAR</td>
+                                <td>{{ invoice.tax_amount }} SAR</td>
+                                <td class="fw-bold">{{ invoice.total_amount }} SAR</td>
+                                <td>{{ invoice.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    {% if invoice.status == 'confirmed' %}
+                                        <span class="badge bg-success">مؤكدة</span>
+                                    {% elif invoice.status == 'cancelled' %}
+                                        <span class="badge bg-danger">ملغاة</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5 text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                                    لا توجد فواتير في هذه الفترة
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

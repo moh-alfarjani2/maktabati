@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}إضافة مستخدم - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h4 class="mb-0">إنشاء حساب مستخدم جديد</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">اسم المستخدم</label>
+                                <input type="text" name="username" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">كلمة المرور</label>
+                                <div class="input-group">
+                                    <input type="password"
+                                           name="password"
+                                           id="id_password"
+                                           class="form-control"
+                                           required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الاسم الأول</label>
+                                <input type="text" name="first_name" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">اسم العائلة</label>
+                                <input type="text" name="last_name" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">الدور</label>
+                                <select name="role" class="form-select">
+                                    <option value="">اختر دور...</option>
+                                    {% for role in form.role.field.queryset %}<option value="{{ role.id }}">{{ role.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-4 d-flex align-items-center pt-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="is_active"
+                                           checked
+                                           id="isActive">
+                                    <label class="form-check-label" for="isActive">حساب نشط</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'user_list' %}" class="btn btn-light me-2">إلغاء</a>
+                            <button type="submit" class="btn btn-primary px-5">حفظ المستخدم</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.getElementById('togglePassword').addEventListener('click', function (e) {
+        const password = document.getElementById('id_password');
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+    </script>
+{% endblock %}

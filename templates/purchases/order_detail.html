@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}تفاصيل طلب الشراء - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">طلب الشراء: {{ order.order_number }}</h3>
+            <p class="text-muted mb-0">المورد: {{ order.supplier.name }} | التاريخ: {{ order.created_at|date:"Y-m-d" }}</p>
+        </div>
+        <div>
+            <a href="{% url 'order_list' %}" class="btn btn-light me-2">رجوع</a>
+            {% if order.status == 'draft' %}
+                <button class="btn btn-primary"
+                        onclick="Swal.fire('قريباً', 'ميزة إرسال الطلب للمورد ستتوفر قريباً', 'info')">
+                    إرسال الطلب
+                </button>
+            {% elif order.status == 'ordered' %}
+                <a href="{% url 'receive_order' order.pk %}" class="btn btn-success">
+                    <i class="fas fa-truck-loading me-1"></i> تأكيد الاستلام وتحديث المخزن
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between">
+                    <h5 class="mb-0">بنود الطلب</h5>
+                    {% if order.status == 'draft' %}
+                        <button class="btn btn-sm btn-outline-primary"
+                                onclick="Swal.fire('نصيحة', 'يمكنك إضافة البنود عبر لوحة التحكم (Admin) حالياً، جاري العمل على واجهة سريعة هنا.', 'info')">
+                            <i class="fas fa-plus me-1"></i> إضافة كتاب
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">الكتاب</th>
+                                    <th>الكمية</th>
+                                    <th>سعر التكلفة</th>
+                                    <th class="text-end pe-4">الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold">{{ item.product.name }}</div>
+                                            <div class="small text-muted">{{ item.product.barcode }}</div>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit_price }} SAR</td>
+                                        <td class="text-end pe-4 fw-bold">{{ item.subtotal }} SAR</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5">لا توجد بنود في هذا الطلب</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% if order.items.count > 0 %}
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <th colspan="3" class="text-end">المجموع الكلي:</th>
+                                        <th class="text-end pe-4 fs-5">{{ order.total_amount }} SAR</th>
+                                    </tr>
+                                </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">حالة الطلب</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-grow-1">الحالة الحالية:</div>
+                        <div class="badge {% if order.status == 'received' %}bg-success{% elif order.status == 'ordered' %}bg-warning text-dark{% else %}bg-secondary{% endif %} p-2">
+                            {{ order.get_status_display }}
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>الملاحظات:</h6>
+                    <p class="text-muted small">{{ order.notes|default:"لا توجد ملاحظات" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

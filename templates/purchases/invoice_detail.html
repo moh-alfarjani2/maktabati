@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}تفاصيل الفاتورة #{{ invoice.invoice_id }}{% endblock %}
+{% block extra_css %}
+    <style>
+    .invoice-header { background: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 2.5rem 2rem; border-radius: 12px 12px 0 0; }
+    .invoice-body { padding: 3rem 2rem; }
+    .info-label { font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+    .info-value { font-size: 1rem; color: #1e293b; font-weight: 600; }
+    .status-ribbon { position: absolute; top: 20px; right: -35px; transform: rotate(45deg); width: 150px; text-align: center; font-weight: 800; font-size: 0.8rem; padding: 6px 0; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .ribbon-draft { background: #64748b; }
+    .ribbon-approved { background: #059669; }
+    .ribbon-cancelled { background: #dc2626; }
+    .table-invoice thead { background: #f8fafc; color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .card-invoice { position: relative; border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    @media print { .no-print { display: none !important; } .card-invoice { box-shadow: none; border: 1px solid #ccc; } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container py-4 fade-in">
+        <!-- Actions Bar -->
+        <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+            <a href="{% url 'invoice_list' %}" class="btn btn-light"><i class="fas fa-arrow-right me-1"></i> العودة للقائمة</a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i> طباعة
+                </button>
+                {% if invoice.status == 'draft' %}
+                    <a href="{% url 'invoice_edit' invoice.invoice_id %}"
+                       class="btn btn-primary"><i class="fas fa-edit me-1"></i> تعديل الفاتورة</a>
+                    <a href="{% url 'approve_invoice' invoice.invoice_id %}"
+                       class="btn btn-success"
+                       onclick="return confirm('هل أنت متأكد من اعتماد الفاتورة؟ سيتم زيادة المخزون فوراً.')"><i class="fas fa-check me-1"></i> اعتماد واستلام</a>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Invoice Card -->
+        <div class="card card-invoice">
+            <!-- Status Ribbon -->
+            <div class="status-ribbon ribbon-{{ invoice.status }}">{{ invoice.get_status_display }}</div>
+            <!-- Header -->
+            <div class="invoice-header">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h2 class="fw-bold text-primary mb-1">{{ settings.site_name|default:"POS SYSTEM" }}</h2>
+                        <p class="text-muted small mb-0">نظام إدارة المخزون والمبيعات الاحترافي</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h4 class="fw-bold mb-0">فاتورة مشتريات (توريد)</h4>
+                        <div class="text-muted smaill">رقم التعريف: #{{ invoice.invoice_id }}</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Body -->
+            <div class="invoice-body">
+                <div class="row g-4 mb-5">
+                    <div class="col-md-4">
+                        <span class="info-label">المورد</span>
+                        <div class="info-value">{{ invoice.supplier.name }}</div>
+                        <div class="text-muted small">{{ invoice.supplier.phone }}</div>
+                        <div class="text-muted small">{{ invoice.supplier.address }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="info-label">تاريخ الفاتورة</span>
+                        <div class="info-value">{{ invoice.created_at|date:"Y-m-d H:i" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="info-label">طريقة الدفع</span>
+                        <div class="info-value">
+                            {% if invoice.payment_method == 'cash' %}
+                                نقدي
+                            {% else %}
+                                آجل / مديونية
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="info-label">المسؤول</span>
+                        <div class="info-value small">{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</div>
+                    </div>
+                </div>
+                <!-- Table -->
+                <div class="table-responsive mb-5">
+                    <table class="table table-invoice align-middle">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">#</th>
+                                <th>المنتج</th>
+                                <th class="text-center">الكمية</th>
+                                <th class="text-end">سعر الوحدة</th>
+                                <th class="text-end pe-4">الإجمالي الفرعي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in invoice.items.all %}
+                                <tr>
+                                    <td class="ps-4 text-muted small">{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ item.product.name }}</div>
+                                        <small class="text-muted">ID: {{ item.product.product_id }}</small>
+                                    </td>
+                                    <td class="text-center fw-bold">{{ item.quantity|floatformat:2 }}</td>
+                                    <td class="text-end">{{ item.unit_price|intcomma }} SAR</td>
+                                    <td class="text-end pe-4 fw-bold">{{ item.subtotal|intcomma }} SAR</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Totals -->
+                <div class="row justify-content-end mb-4">
+                    <div class="col-md-5">
+                        <div class="p-4 bg-light rounded-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">المجموع الفرعي:</span>
+                                <span class="fw-bold">{{ invoice.total_amount|intcomma }} SAR</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">خصم إضافي:</span>
+                                <span class="fw-bold">- 0.00 SAR</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="fw-bold mb-0 text-dark">الإجمالي النهائي:</h5>
+                                <h4 class="fw-bold text-primary mb-0">{{ invoice.total_amount|intcomma }} SAR</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Notes -->
+                {% if invoice.notes %}
+                    <div class="mt-4 pt-4 border-top">
+                        <span class="info-label">ملاحظات الفاتورة</span>
+                        <p class="text-muted mb-0">{{ invoice.notes }}</p>
+                    </div>
+                {% endif %}
+                <!-- Audit Trail -->
+                <div class="mt-5 pt-4 text-center border-top no-print">
+                    <div class="d-inline-flex gap-4">
+                        <div class="small">
+                            <span class="text-muted">المنشئ:</span>
+                            <span class="fw-bold">{{ invoice.created_by.get_full_name }}</span>
+                        </div>
+                        {% if invoice.approved_by %}
+                            <div class="small">
+                                <span class="text-muted">المعتمد:</span>
+                                <span class="fw-bold">{{ invoice.approved_by.get_full_name }}</span>
+                            </div>
+                            <div class="small">
+                                <span class="text-muted">تاريخ الاعتماد:</span>
+                                <span class="fw-bold text-success">{{ invoice.approved_at|date:"Y-m-d H:i" }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

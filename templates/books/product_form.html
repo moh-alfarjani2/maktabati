@@ -1,0 +1,1551 @@
+{% extends 'base.html' %}
+<!-- Antigravity Verification Tag: VERSION 2.0 -->
+{% load humanize %}
+{% block title %}
+    {% if object %}
+        تعديل المنتج: {{ object.name }}
+    {% else %}
+        إضافة منتج جديد
+    {% endif %}
+{% endblock %}
+{% block extra_css %}
+    <style>
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .card-product-form {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .nav-tabs-custom {
+        border-bottom: 1px solid #dee2e6;
+        gap: 10px;
+    }
+    .nav-tabs-custom .nav-link {
+        border: none;
+        color: #64748b;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        border-radius: 10px 10px 0 0;
+        transition: 0.3s;
+    }
+    .nav-tabs-custom .nav-link:hover {
+        background: #f1f5f9;
+        color: var(--primary-color);
+    }
+    .nav-tabs-custom .nav-link.active {
+        color: var(--primary-color);
+        background: white;
+        border-bottom: 3px solid var(--primary-color);
+    }
+    .img-preview-container {
+        width: 100%;
+        height: 200px;
+        background: rgba(248, 249, 250, 0.5);
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    .img-preview-container:hover {
+        border-color: var(--bs-primary);
+        background: rgba(248, 249, 250, 0.8);
+    }
+    .img-preview-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+    .img-preview-container:hover img {
+        transform: scale(1.02);
+    }
+    .remove-img-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .remove-img-btn:hover {
+        background: #dc3545;
+        transform: scale(1.1);
+    }
+    .unit-row {
+        transition: all 0.3s ease;
+    }
+    .animate-in {
+        animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ======= Package & Pricing Styles ======= */
+    .pricing-section-card {
+        border-radius: 14px;
+        border: 2px solid #e2e8f0;
+        transition: border-color 0.3s;
+    }
+    .pricing-section-card.piece-section {
+        border-color: #3b82f6;
+    }
+    .pricing-section-card.package-section {
+        border-color: #10b981;
+    }
+    .pricing-section-header {
+        padding: 1rem 1.25rem;
+        border-radius: 12px 12px 0 0;
+        font-weight: 700;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .pricing-section-header.piece-header {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        color: #1d4ed8;
+    }
+    .pricing-section-header.package-header {
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+        color: #047857;
+    }
+    .calc-field {
+        background: #f8fafc !important;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .profit-positive { color: #16a34a !important; }
+    .profit-negative { color: #dc2626 !important; }
+    .package-toggle-row {
+        background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+        border: 2px solid #86efac;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+    }
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+    }
+    .autocomplete-item {
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.15s;
+    }
+    .autocomplete-item:hover { background: #f1f5f9; }
+    .base-unit-autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        display: none;
+    }
+    .package-section-wrapper {
+        transition: all 0.4s ease;
+        overflow: hidden;
+    }
+    .package-section-wrapper.hidden-section {
+        opacity: 0;
+        max-height: 0;
+        pointer-events: none;
+    }
+    .package-section-wrapper.visible-section {
+        opacity: 1;
+        max-height: 2000px;
+    }
+    .is-invalid {
+        border-color: #dc3545 !important;
+        background-image: none !important;
+    }
+    .invalid-feedback-custom {
+        display: none;
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+        font-weight: 600;
+    }
+    .is-invalid + .invalid-feedback-custom {
+        display: block;
+    }
+    /* Toast Customization */
+    .toast-container {
+        z-index: 2000;
+    }
+    .required-note {
+        font-size: 0.8rem;
+        color: #64748b;
+        background: #f8fafc;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border-right: 3px solid #cbd5e1;
+    }
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: #fff;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .autocomplete-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.9rem;
+    }
+    .autocomplete-item:hover {
+        background: #f8fafc;
+        color: #2563eb;
+        padding-right: 20px;
+    }
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <form method="post"
+                  enctype="multipart/form-data"
+                  id="productForm"
+                  novalidate>
+                {% csrf_token %}
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold mb-1">
+                            {% if object %}
+                                تعديل المنتج <span class="text-primary">#{{ object.product_id }}</span>
+                            {% else %}
+                                إضافة منتج احترافي جديد
+                            {% endif %}
+                        </h3>
+                        <p class="text-muted small mb-0">قم بتعبئة البيانات الأساسية، الباركودات، والوحدات المتاحة لهذا المنتج.</p>
+                    </div>
+                    <div>
+                        <a href="{% url 'product_list' %}" class="btn btn-light px-4 me-2">إلغاء</a>
+                        <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                            <i class="fas fa-save me-1"></i> حفظ المنتج
+                        </button>
+                    </div>
+                </div>
+                <div class="card card-product-form border-0 shadow-sm">
+                    <ul class="nav nav-tabs nav-tabs-custom px-4 bg-light"
+                        id="productTab"
+                        role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#basic-info"
+                                    type="button">البيانات الأساسية</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#pricing-stock"
+                                    type="button">الأسعار والمخزون</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#barcodes-units"
+                                    type="button">الباركودات والوحدات</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#advanced"
+                                    type="button">متقدم</button>
+                        </li>
+                    </ul>
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="tab-content">
+                            <!-- Basic Info -->
+                            <div class="tab-pane fade show active" id="basic-info">
+                                <div class="row g-4">
+                                    <div class="col-lg-8">
+                                        <h5 class="form-section-title">
+                                            <i class="fas fa-info-circle me-2"></i>معلومات التعريف
+                                        </h5>
+                                        <!-- مفتاح تبديل نوع المنتج -->
+                                        <div class="mb-4 p-3 bg-light rounded border border-primary border-opacity-10">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <h6 class="fw-bold mb-1">
+                                                        <i class="fas fa-layer-group me-2 text-primary"></i>نوع المنتج
+                                                    </h6>
+                                                    <p class="text-muted small mb-0">اختر "كتاب" لتفعيل حقول المؤلف واللغة، أو "منتج عادي" للأدوات المكتبية.</p>
+                                                </div>
+                                                <div class="form-check form-switch form-switch-lg">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           id="productTypeSwitch"
+                                                           {% if form.product_type.value == 'book' or not object %}checked{% endif %}>
+                                                    <label class="form-check-label fw-bold id-label-switch"
+                                                           for="productTypeSwitch">
+                                                        {% if form.product_type.value == 'general' %}
+                                                            منتج عادي
+                                                        {% else %}
+                                                            كتاب
+                                                        {% endif %}
+                                                    </label>
+                                                    <input type="hidden"
+                                                           name="product_type"
+                                                           id="id_product_type"
+                                                           value="{{ form.product_type.value|default:'book' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-12">
+                                                <label class="form-label fw-bold" id="nameLabel">
+                                                    {% if form.product_type.value == 'general' %}
+                                                        اسم المنتج
+                                                    {% else %}
+                                                        اسم الكتاب
+                                                    {% endif %}
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text"
+                                                       name="name"
+                                                       class="form-control form-control-lg border-2"
+                                                       id="id_name"
+                                                       value="{{ form.name.value|default:'' }}"
+                                                       placeholder="{% if object %}تعديل اسم المنتج...{% else %}مثلاً: الكتاب الأخضر{% endif %}"
+                                                       required>
+                                                <div class="form-text small mt-1">
+                                                    <i class="fas fa-info-circle me-1"></i> <span id="nameHelpText">اسم الكتاب ضروري لتمييزه في القوائم وفواتير البيع.</span>
+                                                </div>
+                                            </div>
+                                            <!-- حقول الكتاب (تظهر فقط إذا كان النوع كتاب) -->
+                                            <div class="col-md-12 book-only-fields"
+                                                 {% if form.product_type.value == 'general' %}style="display:none"{% endif %}>
+                                                <div class="row g-3">
+                                                    <div class="col-md-6 position-relative">
+                                                        <label class="form-label fw-bold">المؤلف</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white"><i class="fas fa-user-edit text-muted"></i></span>
+                                                            <input type="text"
+                                                                   name="author"
+                                                                   id="id_author"
+                                                                   class="form-control"
+                                                                   value="{{ form.author.value|default:'' }}"
+                                                                   placeholder="ابحث عن مؤلف أو أضف جديداً..."
+                                                                   autocomplete="off">
+                                                        </div>
+                                                        <div id="authorSuggestions"
+                                                             class="autocomplete-dropdown shadow-sm border rounded"
+                                                             style="display:none"></div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">عدد الصفحات</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white"><i class="fas fa-file-alt text-muted"></i></span>
+                                                            <input type="number"
+                                                                   name="page_count"
+                                                                   id="id_page_count"
+                                                                   class="form-control"
+                                                                   value="{{ form.page_count.value|default:'' }}"
+                                                                   placeholder="0">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">اللغة</label>
+                                                        <select name="language" id="id_language" class="form-select">
+                                                            <option value="ar" {% if form.language.value == 'ar' %}selected{% endif %}>العربية</option>
+                                                            <option value="en" {% if form.language.value == 'en' %}selected{% endif %}>الإنجليزية</option>
+                                                            <option value="fr" {% if form.language.value == 'fr' %}selected{% endif %}>الفرنسية</option>
+                                                            <option value="es" {% if form.language.value == 'es' %}selected{% endif %}>الإسبانية</option>
+                                                            <option value="tr" {% if form.language.value == 'tr' %}selected{% endif %}>التركية</option>
+                                                            <option value="other"
+                                                                    {% if form.language.value == 'other' %}selected{% endif %}>
+                                                                أخرى
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold">الفئات</label>
+                                                <!-- Hidden select to store selected category IDs for form submission -->
+                                                <select name="categories"
+                                                        id="selected-categories-select"
+                                                        multiple
+                                                        style="display: none">
+                                                    {% if object %}
+                                                        {% for cat in object.categories.all %}<option value="{{ cat.id }}" selected>{{ cat.name }}</option>{% endfor %}
+                                                    {% endif %}
+                                                </select>
+                                                <div class="form-control d-flex flex-wrap align-items-center gap-2"
+                                                     style="min-height: 48px;
+                                                            cursor: text"
+                                                     onclick="$('#categoryModal').modal('show')">
+                                                    <div id="category-display-container"
+                                                         class="d-flex flex-wrap align-items-center gap-2">
+                                                        {% if object and object.categories.exists %}
+                                                            {% for cat in object.categories.all %}
+                                                                <span class="badge bg-primary fs-6 py-2 px-3 category-badge shadow-sm animate-in"
+                                                                      data-cat-id="{{ cat.id }}">
+                                                                    {{ cat.name }}
+                                                                    <i class="fas fa-times ms-2 text-white"
+                                                                       style="cursor: pointer"
+                                                                       onclick="removeCategory(event, {{ cat.id }})"></i>
+                                                                </span>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <span class="text-muted small" id="no-category-text">انقر لاختيار الفئات (يمكنك اختيار أكثر من فئة)</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-link text-decoration-none ms-auto p-0"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#categoryModal">
+                                                        <i class="fas fa-plus-circle fa-lg text-primary"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold">
+                                                    وحدة القياس الأساسية <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text"
+                                                       name="base_unit"
+                                                       id="id_base_unit"
+                                                       class="form-control"
+                                                       value="{{ form.base_unit.value|default:'قطعة' }}"
+                                                       placeholder="قطعة، كجم، متر..."
+                                                       required>
+                                                <div class="form-text small mt-1">أصغر وحدة يتم بيع المنتج بها (مثلاً: قطعة).</div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label fw-bold">الوصف (اختياري)</label>
+                                                <textarea name="description"
+                                                          class="form-control"
+                                                          rows="3"
+                                                          placeholder="اكتب وصفاً موجزاً للمنتج لقسم المبيعات...">{{ form.description.value|default:'' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <h5 class="form-section-title">
+                                            <i class="fas fa-image me-2"></i>صورة المنتج
+                                        </h5>
+                                        <div class="img-preview-container mb-3" id="img-preview">
+                                            {% if object.image %}
+                                                <img src="{{ object.image.url }}"
+                                                     alt="{{ object.name }}"
+                                                     id="p-img-preview"
+                                                     width="300"
+                                                     height="200">
+                                                <button type="button"
+                                                        class="remove-img-btn"
+                                                        id="remove-img-btn"
+                                                        onclick="removeImage()">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            {% else %}
+                                                <div class="text-center text-muted opacity-50" id="default-preview">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
+                                                    <p class="small mb-0">اضغط لرفع صورة</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <input type="file"
+                                               name="image"
+                                               class="form-control btn-sm"
+                                               id="id_image"
+                                               accept="image/*"
+                                               onchange="previewImage(this)">
+                                        <input type="checkbox"
+                                               name="image-clear"
+                                               id="image-clear_id"
+                                               style="display: none">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Pricing & Stock -->
+                            <div class="tab-pane fade" id="pricing-stock">
+                                <!-- ======= مفتاح العبوة ======= -->
+                                <div class="package-toggle-row mb-4 d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <span class="fw-bold fs-6 text-success"><i class="fas fa-box me-2"></i>تفعيل العبوة</span>
+                                        <p class="text-muted small mb-0 mt-1">عند التفعيل يظهر تسعير العبوة ويتم الربط مع تسعير القطعة تلقائياً</p>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="has_package"
+                                               id="hasPackageSwitch"
+                                               role="switch"
+                                               style="width:3rem;
+                                                      height:1.5rem;
+                                                      cursor:pointer"
+                                               {% if form.has_package.value %}checked{% endif %}>
+                                    </div>
+                                </div>
+                                <!-- ======= حقول العبوة (نوع + عدد قطع) ======= -->
+                                <div id="package-config-row"
+                                     class="row g-3 mb-4 {% if not form.has_package.value %}d-none{% endif %}">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-tag me-1 text-success"></i>نوع العبوة
+                                        </label>
+                                        <div class="position-relative">
+                                            <input type="text"
+                                                   name="package_type"
+                                                   id="packageTypeInput"
+                                                   class="form-control"
+                                                   value="{{ form.package_type.value|default:'' }}"
+                                                   placeholder="مثلاً: صندوق، كرتونة، علبة، حزمة..."
+                                                   autocomplete="off">
+                                            <div class="autocomplete-dropdown" id="packageTypeDropdown"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-cubes me-1 text-success"></i>عدد القطع داخل العبوة
+                                        </label>
+                                        <input type="number"
+                                               name="package_qty"
+                                               id="packageQty"
+                                               class="form-control"
+                                               step="0.001"
+                                               value="{{ form.package_qty.value|default:1 }}">
+                                        <div class="form-text small mt-1">مثلاً: الكرتونة تحتوي على 24 قطعة.</div>
+                                    </div>
+                                </div>
+                                <!-- ======= قسم تسعير العبوة ======= -->
+                                <div class="package-section-wrapper {% if form.has_package.value %}visible-section{% else %}hidden-section{% endif %} mb-4"
+                                     id="package-pricing-section">
+                                    <div class="pricing-section-card package-section">
+                                        <div class="pricing-section-header package-header">
+                                            <i class="fas fa-box-open"></i>
+                                            هيكل تسعير <span id="pkgTypeLabel">العبوة</span>
+                                        </div>
+                                        <div class="p-3 p-lg-4">
+                                            <div class="row g-3">
+                                                <div class="col-md-3">
+                                                    <label class="form-label fw-bold small">سعر الشراء (العبوة)</label>
+                                                    <div class="input-group">
+                                                        <input type="number"
+                                                               step="0.01"
+                                                               min="0"
+                                                               name="package_purchase_price"
+                                                               id="pkgBuyPrice"
+                                                               class="form-control"
+                                                               value="{{ form.package_purchase_price.value|default:'' }}"
+                                                               placeholder="0.00">
+                                                        <span class="input-group-text bg-light">SAR</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fw-bold small">سعر البيع (العبوة)</label>
+                                                    <div class="input-group">
+                                                        <input type="number"
+                                                               step="0.01"
+                                                               min="0"
+                                                               name="package_selling_price"
+                                                               id="pkgSellPrice"
+                                                               class="form-control fw-bold text-success"
+                                                               value="{{ form.package_selling_price.value|default:'' }}"
+                                                               placeholder="0.00">
+                                                        <span class="input-group-text bg-light">SAR</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fw-bold small">ضريبة العبوة (%)</label>
+                                                    <div class="input-group">
+                                                        <input type="number"
+                                                               step="0.01"
+                                                               min="0"
+                                                               max="100"
+                                                               name="package_tax_rate"
+                                                               id="pkgTax"
+                                                               class="form-control"
+                                                               value="{{ form.package_tax_rate.value|default:'0' }}"
+                                                               placeholder="0">
+                                                        <span class="input-group-text bg-light"><i class="fas fa-percentage"></i></span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fw-bold small">تخفيض العبوة (%)</label>
+                                                    <div class="input-group">
+                                                        <input type="number"
+                                                               step="0.01"
+                                                               min="0"
+                                                               max="100"
+                                                               name="package_discount_rate"
+                                                               id="pkgDiscount"
+                                                               class="form-control"
+                                                               value="{{ form.package_discount_rate.value|default:'0' }}"
+                                                               placeholder="0">
+                                                        <span class="input-group-text bg-light"><i class="fas fa-tag"></i></span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fw-bold small text-muted">السعر النهائي للعبوة</label>
+                                                    <div class="input-group">
+                                                        <input type="text"
+                                                               class="form-control calc-field"
+                                                               id="pkgFinalPrice"
+                                                               readonly
+                                                               placeholder="—">
+                                                        <span class="input-group-text bg-light">SAR</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fw-bold small text-muted">هامش ربح العبوة</label>
+                                                    <div class="input-group">
+                                                        <input type="text"
+                                                               class="form-control calc-field"
+                                                               id="pkgProfitMargin"
+                                                               readonly
+                                                               placeholder="—">
+                                                        <span class="input-group-text bg-light"><i class="fas fa-percentage"></i></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- ======= قسم تسعير القطعة (دائماً ظاهر) ======= -->
+                                <div class="pricing-section-card piece-section mb-4">
+                                    <div class="pricing-section-header piece-header">
+                                        <i class="fas fa-cube"></i>
+                                        هيكل تسعير القطعة
+                                        <span class="badge bg-primary ms-2" style="font-size:0.7rem;">الوحدة الأساسية دائماً</span>
+                                    </div>
+                                    <div class="p-3 p-lg-4">
+                                        <div class="row g-3">
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small">سعر الشراء (قطعة)</label>
+                                                <div class="input-group">
+                                                    <input type="number"
+                                                           step="0.01"
+                                                           min="0"
+                                                           name="purchase_price"
+                                                           id="pieceBuyPrice"
+                                                           class="form-control"
+                                                           value="{{ form.purchase_price.value|default:'' }}"
+                                                           placeholder="0.00"
+                                                           required>
+                                                    <span class="input-group-text bg-light">SAR</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small">سعر البيع (قطعة)</label>
+                                                <div class="input-group">
+                                                    <input type="number"
+                                                           step="0.01"
+                                                           min="0"
+                                                           name="selling_price"
+                                                           id="pieceSellPrice"
+                                                           class="form-control fw-bold text-primary"
+                                                           value="{{ form.selling_price.value|default:'' }}"
+                                                           placeholder="0.00"
+                                                           required>
+                                                    <span class="input-group-text bg-light">SAR</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small">ضريبة القطعة (%)</label>
+                                                <div class="input-group">
+                                                    <input type="number"
+                                                           step="0.01"
+                                                           min="0"
+                                                           max="100"
+                                                           name="tax_rate"
+                                                           id="pieceTax"
+                                                           class="form-control"
+                                                           value="{{ form.tax_rate.value|default:'0' }}"
+                                                           placeholder="0">
+                                                    <span class="input-group-text bg-light"><i class="fas fa-percentage"></i></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small">تخفيض القطعة (%)</label>
+                                                <div class="input-group">
+                                                    <input type="number"
+                                                           step="0.01"
+                                                           min="0"
+                                                           max="100"
+                                                           name="discount_rate"
+                                                           id="pieceDiscount"
+                                                           class="form-control"
+                                                           value="{{ form.discount_rate.value|default:'0' }}"
+                                                           placeholder="0">
+                                                    <span class="input-group-text bg-light"><i class="fas fa-tag"></i></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small text-muted">السعر النهائي للقطعة</label>
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                           class="form-control calc-field"
+                                                           id="pieceFinalPrice"
+                                                           readonly
+                                                           placeholder="—">
+                                                    <span class="input-group-text bg-light">SAR</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small text-muted">هامش ربح القطعة</label>
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                           class="form-control calc-field"
+                                                           id="pieceProfitMargin"
+                                                           readonly
+                                                           placeholder="—">
+                                                    <span class="input-group-text bg-light"><i class="fas fa-percentage"></i></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small">أقل سعر بيع مسموح</label>
+                                                <div class="input-group border border-warning rounded">
+                                                    <input type="number"
+                                                           step="0.01"
+                                                           min="0"
+                                                           name="min_price"
+                                                           class="form-control"
+                                                           value="{{ form.min_price.value|default:'' }}"
+                                                           placeholder="0.00">
+                                                    <span class="input-group-text bg-warning-subtle text-warning">SAR</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- ======= المخزون ======= -->
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-warehouse me-2"></i>المخزون والتحذيرات
+                                </h5>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">المخزون الحالي</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="number"
+                                                   class="form-control bg-light"
+                                                   value="{{ object.current_stock|default:'0' }}"
+                                                   readonly>
+                                            <span class="ms-2 text-muted small">لا يمكن تعديله مباشرة</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">حد التنبيه (Low Stock Level)</label>
+                                        <input type="number"
+                                               name="min_stock_level"
+                                               class="form-control"
+                                               value="{{ form.min_stock_level.value|default:'5' }}"
+                                               required>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Barcodes & Units -->
+                            <div class="tab-pane fade" id="barcodes-units">
+                                <div class="row g-5">
+                                    <div class="col-lg-6">
+                                        <h5 class="form-section-title d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-barcode me-2"></i>باركودات إضافية</span>
+                                            <button type="button"
+                                                    class="btn btn-outline-primary btn-sm rounded-pill px-3"
+                                                    onclick="addBarcodeRow()">+ إضافة باركود</button>
+                                        </h5>
+                                        <div id="barcode-list">
+                                            {% if object %}
+                                                {% for bc in object.barcodes.all %}
+                                                    <div class="input-group mb-2 shadow-sm border rounded overflow-hidden">
+                                                        <input type="text"
+                                                               class="form-control border-0"
+                                                               value="{{ bc.barcode }}"
+                                                               readonly>
+                                                        {% if bc.is_primary %}
+                                                            <span class="input-group-text bg-white border-0"><i class="fas fa-star text-warning"></i></span>
+                                                        {% endif %}
+                                                        <button class="btn btn-white border-0 text-danger"
+                                                                type="button"
+                                                                onclick="$(this).parent().remove()">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="text-center py-4 text-muted bg-light rounded border border-dashed mb-2"
+                                                 id="no-barcodes-msg"
+                                                 {% if object and object.barcodes.exists %}style="display:none"{% endif %}>
+                                                <i class="fas fa-barcode fa-2x opacity-25 mb-2"></i>
+                                                <p class="small mb-0">أدخل باركودات بديلة (صندوق، كرتون، عروض)</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6 border-start ps-lg-5">
+                                        <h5 class="form-section-title d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-cubes me-2"></i>وحدات البيع (كرتون/باك)</span>
+                                            <button type="button"
+                                                    class="btn btn-outline-success btn-sm rounded-pill px-3"
+                                                    onclick="addUnitRow()">+ إضافة وحدة</button>
+                                        </h5>
+                                        <div id="unit-list">
+                                            {% if object %}
+                                                {% for unit in object.units.all %}
+                                                    <div class="row g-2 mb-2 p-2 border rounded bg-white shadow-sm unit-row animate-in">
+                                                        <div class="col-4">
+                                                            <input type="text"
+                                                                   name="unit_name[]"
+                                                                   class="form-control form-control-sm"
+                                                                   value="{{ unit.name }}"
+                                                                   placeholder="الاسم">
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <input type="number"
+                                                                   name="unit_factor[]"
+                                                                   class="form-control form-control-sm"
+                                                                   value="{{ unit.conversion_factor|stringformat:'g' }}"
+                                                                   placeholder="التحويل">
+                                                        </div>
+                                                        <div class="col-3">
+                                                            <input type="number"
+                                                                   step="0.01"
+                                                                   name="unit_price[]"
+                                                                   class="form-control form-control-sm"
+                                                                   value="{{ unit.selling_price|stringformat:'g' }}"
+                                                                   placeholder="السعر">
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <input type="text"
+                                                                   name="unit_barcode[]"
+                                                                   class="form-control form-control-sm"
+                                                                   value="{{ unit.barcode }}"
+                                                                   placeholder="باركود">
+                                                        </div>
+                                                        <div class="col-1 text-end">
+                                                            <button class="btn btn-sm text-danger"
+                                                                    type="button"
+                                                                    onclick="$(this).closest('.unit-row').remove()">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="text-center py-4 text-muted bg-light rounded border border-dashed mb-2"
+                                                 id="no-units-msg"
+                                                 {% if object and object.units.exists %}style="display:none"{% endif %}>
+                                                <i class="fas fa-layer-group fa-2x opacity-25 mb-2"></i>
+                                                <p class="small mb-0">حدد الوحدات لتسهيل المبيعات بالجملة.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Advanced -->
+                            <div class="tab-pane fade" id="advanced">
+                                <h5 class="form-section-title">إعدادات متقدمة</h5>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">معرف المنتج (Unique ID)</label>
+                                        <input type="text"
+                                               name="product_id"
+                                               class="form-control bg-light fw-mono"
+                                               value="{{ form.product_id.value|default:'' }}"
+                                               readonly
+                                               placeholder="يولد آلياً">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mt-4 pt-2">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   name="is_active"
+                                                   id="isActive"
+                                                   {% if form.is_active.value %}checked{% endif %}>
+                                            <label class="form-check-label fw-bold" for="isActive">المنتج نشط ومتاح للبيع</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Category Modal -->
+    <div class="modal fade"
+         id="categoryModal"
+         tabindex="-1"
+         aria-labelledby="categoryModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary" id="categoryModalLabel">
+                        <i class="fas fa-tags me-2"></i>اختيار أو إضافة فئة
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-bold small">ابحث عن الفئة أو اكتب فئة جديدة</label>
+                        <input type="text"
+                               id="category-search-input"
+                               class="form-control form-control-lg bg-light"
+                               placeholder="اكتب اسم الفئة هنا..."
+                               autocomplete="off">
+                        <div id="category-loading"
+                             class="position-absolute"
+                             style="top: 40px;
+                                    left: 15px;
+                                    display: none">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        </div>
+                    </div>
+                    <!-- Suggestions List -->
+                    <div id="category-suggestions"
+                         class="list-group mb-3 shadow-sm border-0"
+                         style="max-height: 250px;
+                                overflow-y: auto"></div>
+                    <!-- Add New Option (Hidden by default) -->
+                    <div id="add-new-category-box"
+                         class="p-3 bg-light rounded border border-primary border-opacity-25"
+                         style="display: none">
+                        <p class="mb-2 fw-bold text-primary">
+                            <i class="fas fa-plus-circle me-1"></i> إضافة كفئة جديدة:
+                        </p>
+                        <p class="mb-3 fs-5 fw-bold" id="new-category-name-display"></p>
+                        <button type="button"
+                                class="btn btn-primary w-100 shadow-sm"
+                                onclick="createNewCategory()">اعتماد كفئة جديدة</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                let html = '<img src="' + e.target.result + '" alt="preview" id="p-img-preview" width="300" height="200" style="object-fit: contain;">';
+                html += '<button type="button" class="remove-img-btn" id="remove-img-btn" onclick="removeImage()"><i class="fas fa-times"></i></button>';
+                $('#img-preview').html(html);
+                $('#image-clear_id').prop('checked', false);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage() {
+        $('#id_image').val('');
+        $('#image-clear_id').prop('checked', true);
+        $('#img-preview').html('<div class="text-center text-muted opacity-50" id="default-preview"><i class="fas fa-cloud-upload-alt fa-3x mb-2"></i><p class="small mb-0">اضغط لرفع صورة</p></div>');
+    }
+
+    // ============================================================
+    //  Real-Time Pricing & Package Logic
+    // ============================================================
+    $(document).ready(function() {
+
+        /* ---- مساعدات ---- */
+        function safeFloat(val, fallback) {
+            if (val === "" || val === null || val === undefined) return fallback;
+            var v = parseFloat(val);
+            return isNaN(v) ? fallback : v;
+        }
+
+        function calcFinalPrice(sell, tax, discount) {
+            return sell * (1 + tax / 100) * (1 - discount / 100);
+        }
+
+        function calcMarginPct(buy, sell, tax, discount) {
+            if (buy === "" || sell === "" || buy === null || sell === null) return null;
+            var b = parseFloat(buy);
+            var s = parseFloat(sell);
+            if (isNaN(b) || isNaN(s) || b <= 0) return null;
+            
+            var finalSell = calcFinalPrice(s, safeFloat(tax,0), safeFloat(discount,0));
+            return ((finalSell - b) / b) * 100;
+        }
+
+        function setMarginField(fieldId, marginPct) {
+            var $f = $('#' + fieldId);
+            if (marginPct === null) { $f.val('—'); $f.removeClass('profit-positive profit-negative'); return; }
+            $f.val(marginPct.toFixed(2) + ' %');
+            $f.removeClass('profit-positive profit-negative');
+            $f.addClass(marginPct >= 0 ? 'profit-positive' : 'profit-negative');
+        }
+
+        /* ---- حساب تسعير القطعة ---- */
+        function calcPiece() {
+            var buy      = safeFloat($('#pieceBuyPrice').val(), 0);
+            var sell     = safeFloat($('#pieceSellPrice').val(), 0);
+            var tax      = safeFloat($('#pieceTax').val(), 0);
+            var discount = safeFloat($('#pieceDiscount').val(), 0);
+            if (sell > 0) {
+                $('#pieceFinalPrice').val(calcFinalPrice(sell, tax, discount).toFixed(2));
+            } else {
+                $('#pieceFinalPrice').val('—');
+            }
+            setMarginField('pieceProfitMargin', sell > 0 ? calcMarginPct(buy, sell, tax, discount) : null);
+        }
+
+        /* ---- حساب تسعير العبوة ---- */
+        function calcPackage() {
+            var buy      = safeFloat($('#pkgBuyPrice').val(), 0);
+            var sell     = safeFloat($('#pkgSellPrice').val(), 0);
+            var tax      = safeFloat($('#pkgTax').val(), 0);
+            var discount = safeFloat($('#pkgDiscount').val(), 0);
+            if (sell > 0) {
+                $('#pkgFinalPrice').val(calcFinalPrice(sell, tax, discount).toFixed(2));
+            } else {
+                $('#pkgFinalPrice').val('—');
+            }
+            setMarginField('pkgProfitMargin', sell > 0 ? calcMarginPct(buy, sell, tax, discount) : null);
+        }
+
+        /* ---- الربط الذكي: العبوة → القطعة ---- */
+        function syncPackageToPiece() {
+            if (window.isSyncing) return;
+            window.isSyncing = true;
+            try {
+                var pkgBuy  = $('#pkgBuyPrice').val();
+                var pkgSell = $('#pkgSellPrice').val();
+                var qty     = safeFloat($('#packageQty').val(), 1);
+                if (qty <= 0) qty = 1;
+
+                if (pkgBuy === "" || pkgBuy === null) {
+                    $('#pieceBuyPrice').val("");
+                } else {
+                    var val = safeFloat(pkgBuy, 0);
+                    $('#pieceBuyPrice').val((val / qty).toFixed(4));
+                }
+
+                if (pkgSell === "" || pkgSell === null) {
+                    $('#pieceSellPrice').val("");
+                } else {
+                    var val = safeFloat(pkgSell, 0);
+                    $('#pieceSellPrice').val((val / qty).toFixed(4));
+                }
+                calcPiece();
+                calcPackage();
+            } finally {
+                window.isSyncing = false;
+            }
+        }
+
+        /* ---- الربط الذكي: القطعة → العبوة ---- */
+        function syncPieceToPackage() {
+            if (window.isSyncing) return;
+            window.isSyncing = true;
+            try {
+                var pBuy  = $('#pieceBuyPrice').val();
+                var pSell = $('#pieceSellPrice').val();
+                var qty   = safeFloat($('#packageQty').val(), 1);
+                if (qty <= 0) qty = 1;
+
+                if (pBuy === "" || pBuy === null) {
+                    $('#pkgBuyPrice').val("");
+                } else {
+                    var val = safeFloat(pBuy, 0);
+                    $('#pkgBuyPrice').val((val * qty).toFixed(4));
+                }
+
+                if (pSell === "" || pSell === null) {
+                    $('#pkgSellPrice').val("");
+                } else {
+                    var val = safeFloat(pSell, 0);
+                    $('#pkgSellPrice').val((val * qty).toFixed(4));
+                }
+                calcPackage();
+                calcPiece();
+            } finally {
+                window.isSyncing = false;
+            }
+        }
+
+        /* ---- إعادة حساب الكل (عند تغيير الكمية) ---- */
+        function syncQtyChange() {
+            // عند تغيير الكمية، نعتبر العبوة هي "المصدر" ونحدث القطعة بناءً عليها
+            // لضمان استقرار السعر الإجمالي للكرتونة
+            syncPackageToPiece();
+        }
+
+        /* ---- ربط الأحداث: القطعة ---- */
+        $('#pieceBuyPrice, #pieceSellPrice').on('input', function() {
+            syncPieceToPackage();
+        });
+        $('#pieceTax').on('input', function() {
+            if (window.isSyncing) return;
+            window.isSyncing = true;
+            $('#pkgTax').val($(this).val());
+            calcPiece();
+            calcPackage();
+            window.isSyncing = false;
+        });
+        $('#pieceDiscount').on('input', function() {
+            if (window.isSyncing) return;
+            window.isSyncing = true;
+            $('#pkgDiscount').val($(this).val());
+            calcPiece();
+            calcPackage();
+            window.isSyncing = false;
+        });
+
+        /* ---- ربط الأحداث: العبوة ---- */
+        $('#pkgBuyPrice, #pkgSellPrice').on('input', function() {
+            syncPackageToPiece();
+        });
+        $('#pkgTax').on('input', function() {
+            if (window.isSyncing) return;
+            window.isSyncing = true;
+            $('#pieceTax').val($(this).val());
+            calcPackage();
+            calcPiece();
+            window.isSyncing = false;
+        });
+        $('#pkgDiscount').on('input', function() {
+            if (window.isSyncing) return;
+            window.isSyncing = true;
+            $('#pieceDiscount').val($(this).val());
+            calcPackage();
+            calcPiece();
+            window.isSyncing = false;
+        });
+
+        $('#packageQty').on('input', function() {
+            syncQtyChange();
+        });
+
+        /* ---- مفتاح العبوة (Switch) ---- */
+        $('#hasPackageSwitch').on('change', function() {
+            var isOn = $(this).is(':checked');
+            if (isOn) {
+                $('#package-config-row').removeClass('d-none');
+                $('#package-pricing-section').removeClass('hidden-section').addClass('visible-section');
+            } else {
+                $('#package-config-row').addClass('d-none');
+                $('#package-pricing-section').removeClass('visible-section').addClass('hidden-section');
+            }
+        });
+
+        /* ---- تحديث label العبوة بناءً على نوعها ---- */
+        $('#packageTypeInput').on('input', function() {
+            var v = $(this).val().trim();
+            $('#pkgTypeLabel').text(v || 'العبوة');
+        });
+
+        /* ---- Autocomplete لأنواع العبوات ---- */
+        var pkgTypeTimer;
+        $('#packageTypeInput').on('input focus', function() {
+            clearTimeout(pkgTypeTimer);
+            var q = $(this).val().trim();
+            var $dd = $('#packageTypeDropdown');
+            pkgTypeTimer = setTimeout(function() {
+                $.ajax({
+                    url: '{% url "api_package_types" %}',
+                    data: { q: q },
+                    success: function(res) {
+                        $dd.empty();
+                        if (res.results && res.results.length > 0) {
+                            res.results.forEach(function(t) {
+                                $dd.append('<div class="autocomplete-item">' + t + '</div>');
+                            });
+                            $dd.show();
+                        } else {
+                            $dd.hide();
+                        }
+                    }
+                });
+            }, 250);
+        });
+
+        $(document).on('click', '#packageTypeDropdown .autocomplete-item', function() {
+            var val = $(this).text();
+            $('#packageTypeInput').val(val);
+            $('#pkgTypeLabel').text(val);
+            $('#packageTypeDropdown').hide();
+        });
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#packageTypeInput, #packageTypeDropdown').length) {
+                $('#packageTypeDropdown').hide();
+            }
+        });
+
+        /* ---- منطق نوع المنتج (كتاب / عام) ---- */
+        $('#productTypeSwitch').on('change', function() {
+            let isBook = $(this).is(':checked');
+            let typeVal = isBook ? 'book' : 'general';
+            $('#id_product_type').val(typeVal);
+            
+            // تحديث التسميات
+            $('.id-label-switch').text(isBook ? 'كتاب' : 'منتج عادي');
+            $('#nameLabel').html((isBook ? 'اسم الكتاب' : 'اسم المنتج') + ' <span class="text-danger">*</span>');
+            $('#nameHelpText').text((isBook ? 'اسم الكتاب' : 'اسم المنتج') + ' ضروري لتمييزه في القوائم وفواتير البيع.');
+            $('#id_name').attr('placeholder', isBook ? 'مثلاً: الكتاب الأخضر' : 'مثلاً: طقم أقلام ناشف');
+
+            // إظهار/إخفاء حقول الكتاب
+            if (isBook) {
+                $('.book-only-fields').slideDown();
+            } else {
+                $('.book-only-fields').slideUp();
+                // اختياري: تصفير الحقول عند الإخفاء
+                // $('#id_author, #id_page_count').val('');
+            }
+        });
+
+        /* ---- Autocomplete للمؤلف ---- */
+        let authorTimer;
+        $('#id_author').on('input focus', function() {
+            clearTimeout(authorTimer);
+            let q = $(this).val().trim();
+            let $dd = $('#authorSuggestions');
+            
+            authorTimer = setTimeout(function() {
+                $.ajax({
+                    url: '{% url "api_author_suggestions" %}',
+                    data: { q: q },
+                    success: function(res) {
+                        $dd.empty();
+                        if (res.results && res.results.length > 0) {
+                            res.results.forEach(function(a) {
+                                $dd.append('<div class="autocomplete-item">' + a + '</div>');
+                            });
+                            $dd.show();
+                        } else {
+                            $dd.hide();
+                        }
+                    }
+                });
+            }, 250);
+        });
+
+        $(document).on('click', '#authorSuggestions .autocomplete-item', function() {
+            $('#id_author').val($(this).text());
+            $('#authorSuggestions').hide();
+        });
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#id_author, #authorSuggestions').length) {
+                $('#authorSuggestions').hide();
+            }
+        });
+
+        /* ---- حساب أولي عند تحميل الصفحة ---- */
+        calcPiece();
+        calcPackage();
+    });
+
+    function addBarcodeRow() {
+        $('#no-barcodes-msg').hide();
+        let html = `
+        <div class="input-group mb-2 animate-in shadow-sm border rounded overflow-hidden">
+            <input type="text" name="new_barcodes[]" class="form-control border-0" placeholder="أدخل الباركود..." autofocus>
+            <button class="btn btn-white border-0 text-danger" type="button" onclick="$(this).parent().remove()"><i class="fas fa-times"></i></button>
+        </div>`;
+        $('#barcode-list').append(html);
+    }
+
+    function addUnitRow() {
+        $('#no-units-msg').hide();
+        let html = `
+        <div class="row g-2 mb-2 p-2 border rounded bg-white shadow-sm unit-row animate-in">
+            <div class="col-4"><input type="text" name="unit_name[]" class="form-control form-control-sm" placeholder="الاسم (كرتون)"></div>
+            <div class="col-2"><input type="number" name="unit_factor[]" class="form-control form-control-sm" placeholder="التحويل"></div>
+            <div class="col-3"><input type="number" step="0.01" name="unit_price[]" class="form-control form-control-sm" placeholder="السعر"></div>
+            <div class="col-2"><input type="text" name="unit_barcode[]" class="form-control form-control-sm" placeholder="باركود"></div>
+            <div class="col-1 text-end"><button class="btn btn-sm text-danger" type="button" onclick="$(this).closest('.unit-row').remove()"><i class="fas fa-times"></i></button></div>
+        </div>`;
+        $('#unit-list').append(html);
+    }
+
+    // Modal Category Logic
+    let searchTimeout;
+
+    $(document).ready(function() {
+        $('#category-search-input').on('input', function() {
+            clearTimeout(searchTimeout);
+            let query = $(this).val().trim();
+            let addBox = $('#add-new-category-box');
+            let suggestions = $('#category-suggestions');
+            
+            if (query.length > 0) {
+                $('#category-loading').show();
+                searchTimeout = setTimeout(() => {
+                    // Collect selected category IDs to exclude them from search results
+                    let selectedCatIds = [];
+                    $('#selected-categories-select option').each(function() {
+                        selectedCatIds.push($(this).val());
+                    });
+
+                    $.ajax({
+                        url: '{% url "api_search_categories" %}',
+                        data: { 
+                            'q': query,
+                            'exclude': selectedCatIds.join(',') 
+                        },
+                        success: function(res) {
+                            $('#category-loading').hide();
+                            suggestions.empty();
+                            let foundExact = false;
+                            
+                            if (res.results && res.results.length > 0) {
+                                res.results.forEach(c => {
+                                    if(c.name.toLowerCase() === query.toLowerCase()) foundExact = true;
+                                suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between border-start-0 border-end-0" onclick="selectCategory(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+                                            <span>${c.name}</span>
+                                            <i class="fas fa-plus-circle text-primary opacity-50"></i>
+                                        </button>
+                                    `);
+                                });
+                            } else {
+                                suggestions.append(`<div class="p-3 text-center text-muted small border-0"><i class="fas fa-search me-1"></i> لم يتم العثور على نتائج مطابقة</div>`);
+                            }
+                            
+                            if (!foundExact) {
+                                $('#new-category-name-display').text(query);
+                                addBox.slideDown();
+                            } else {
+                                addBox.slideUp();
+                            }
+                        },
+                        error: function() {
+                            $('#category-loading').hide();
+                        }
+                    });
+                }, 300);
+            } else {
+                suggestions.empty();
+                addBox.slideUp();
+            }
+        });
+        
+        $('#categoryModal').on('shown.bs.modal', function () {
+            $('#category-search-input').focus().val('');
+            $('#category-suggestions').empty().append(`
+                <div class="p-3 text-center text-muted small border-0"><i class="fas fa-keyboard me-1"></i> ابدأ الكتابة للبحث أو الإضافة</div>
+            `);
+            $('#add-new-category-box').hide();
+        });
+    });
+
+    function selectCategory(id, name) {
+        // Check if already selected
+        if ($(`#selected-categories-select option[value="${id}"]`).length > 0) {
+            let modal = bootstrap.Modal.getInstance(document.getElementById('categoryModal'));
+            modal.hide();
+            return;
+        }
+
+        $('#no-category-text').remove();
+        
+        // Add to hidden select
+        $('#selected-categories-select').append(`<option value="${id}" selected>${name}</option>`);
+
+        // Add visual badge
+        let badgeHtml = `
+            <span class="badge bg-primary fs-6 py-2 px-3 category-badge shadow-sm animate-in" data-cat-id="${id}">
+                ${name}
+                <i class="fas fa-times ms-2 text-white remove-cat-icon" style="cursor: pointer;" data-id="${id}"></i>
+            </span>
+        `;
+        $('#category-display-container').append(badgeHtml);
+        
+        let modal = bootstrap.Modal.getInstance(document.getElementById('categoryModal'));
+        modal.hide();
+    }
+
+    $(document).on('click', '.remove-cat-icon', function(e) {
+        let id = $(this).data('id');
+        removeCategory(e, id);
+    });
+
+    function removeCategory(event, id) {
+        if(event) {
+            event.stopPropagation();
+        }
+        $(`#selected-categories-select option[value="${id}"]`).remove();
+        $(`.category-badge[data-cat-id="${id}"]`).remove();
+        
+        if ($('#selected-categories-select option').length === 0) {
+            $('#category-display-container').html('<span class="text-muted small animate-in" id="no-category-text">انقر لاختيار الفئات (يمكنك اختيار أكثر من فئة)</span>');
+        }
+    }
+
+    function createNewCategory() {
+        let name = $('#category-search-input').val().trim();
+        
+        if(!name) return;
+        
+        let btn = $('#add-new-category-box button');
+        let originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...').prop('disabled', true);
+        
+        $.ajax({
+            url: '{% url "api_create_category" %}',
+            type: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            data: JSON.stringify({ name: name }),
+            contentType: 'application/json',
+            success: function(res) {
+                btn.html(originalText).prop('disabled', false);
+                if(res.success) {
+                    selectCategory(res.category.id, res.category.name);
+                } else {
+                    alert('خطأ أثناء الإنشاء: ' + res.error);
+                }
+            },
+            error: function() {
+                btn.html(originalText).prop('disabled', false);
+                alert('حدث خطأ غير متوقع بالاتصال بالخادم!');
+            }
+        });
+    }
+    $(document).ready(function() {
+        /* ---- نظام التحقق الاحترافي والتبويبات ---- */
+        $('#productForm').on('submit', function(e) {
+            let form = this;
+            let isValid = true;
+            let firstInvalidField = null;
+
+            // إزالة علامات الخطأ السابقة
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback-custom').remove();
+
+            // التحقق من الحقول المطلوبة (HTML5 required)
+            $(form).find('[required]').each(function() {
+                // تخطي الحقول داخل قسم العبوة إذا كانت غير مفعلة
+                if ($(this).closest('.package-section-wrapper').length > 0 && !$('#hasPackageSwitch').is(':checked')) {
+                    return;
+                }
+
+                if (!$(this).val() || $(this).val().trim() === "") {
+                    isValid = false;
+                    $(this).addClass('is-invalid');
+                    let $label = $(this).closest('.col-md-12, .col-md-6, .col-md-3, .col-md-4').find('label').first();
+                    let fieldName = $label.text().replace('*', '').trim() || "هذا الحقل";
+                    $(this).after(`<div class="invalid-feedback-custom animate-in"><i class="fas fa-exclamation-triangle me-1"></i> حقل "${fieldName}" مطلوب.</div>`);
+                    if (!firstInvalidField) firstInvalidField = $(this);
+                }
+            });
+
+            // تحقق إضافي لعدد قطع العبوة إذا تم تفعيلها
+            if ($('#hasPackageSwitch').is(':checked')) {
+                let $qty = $('#packageQty');
+                let qtyVal = parseFloat($qty.val());
+                if (!$qty.val() || isNaN(qtyVal) || qtyVal <= 0) {
+                    isValid = false;
+                    $qty.addClass('is-invalid');
+                    if (!$qty.next('.invalid-feedback-custom').length) {
+                        $qty.after(`<div class="invalid-feedback-custom animate-in"><i class="fas fa-exclamation-triangle me-1"></i> يجب تحديد عدد القطع داخل العبوة (أكبر من 0).</div>`);
+                    }
+                    if (!firstInvalidField) firstInvalidField = $qty;
+                }
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // إظهار التنبيه العام
+                showToast('خطأ في البيانات', 'يرجى إكمال الحقول المطلوبة الموضحة باللون الأحمر قبل الحفظ.', 'danger');
+
+                // الانتقال للتبويب الصحيح
+                if (firstInvalidField) {
+                    let tabPane = firstInvalidField.closest('.tab-pane');
+                    let tabId = tabPane.attr('id');
+                    let tabButton = $(`button[data-bs-target="#${tabId}"]`);
+                    
+                    if (tabPane.length && tabButton.length) {
+                        bootstrap.Tab.getOrCreateInstance(tabButton[0]).show();
+                        setTimeout(() => {
+                            firstInvalidField.focus();
+                            // اهتزاز خفيف للحقل
+                            firstInvalidField.addClass('animate__animated animate__shakeX');
+                            setTimeout(() => firstInvalidField.removeClass('animate__animated animate__shakeX'), 1000);
+                        }, 400);
+                    }
+                }
+                return false;
+            }
+            
+            // إذا كان كل شيء صحيح، نترك النموذج يرسل بشكل طبيعي
+            return true;
+        });
+    });
+
+    function showToast(title, message, type = 'primary') {
+        let icon = type === 'danger' ? 'fa-exclamation-circle' : 'fa-check-circle';
+        let html = `
+        <div class="toast align-items-center text-white bg-${type} border-0 shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="fas ${icon} fa-lg me-2"></i>
+                    <div>
+                        <strong class="d-block">${title}</strong>
+                        <small>${message}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>`;
+        
+        let $toastContainer = $('#toast-container');
+        if (!$toastContainer.length) {
+            $('body').append('<div id="toast-container" class="toast-container position-fixed bottom-0 start-0 p-3"></div>');
+            $toastContainer = $('#toast-container');
+        }
+        
+        let $toastEl = $(html);
+        $toastContainer.append($toastEl);
+        let toast = new bootstrap.Toast($toastEl[0], { delay: 5000 });
+        toast.show();
+        $toastEl.on('hidden.bs.toast', function() { $(this).remove(); });
+    }
+    </script>
+    <!-- Animate.css for shaking effect -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+{% endblock %}

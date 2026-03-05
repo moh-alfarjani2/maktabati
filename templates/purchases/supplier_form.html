@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}إضافة/تعديل مورد - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h4 class="mb-0">بيانات المورد</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">اسم المورد</label>
+                            <input type="text"
+                                   name="name"
+                                   class="form-control"
+                                   value="{{ form.name.value|default:'' }}"
+                                   required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الشخص المسؤول</label>
+                                <input type="text"
+                                       name="contact_person"
+                                       class="form-control"
+                                       value="{{ form.contact_person.value|default:'' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">رقم الجوال</label>
+                                <input type="text"
+                                       name="phone"
+                                       class="form-control"
+                                       value="{{ form.phone.value|default:'' }}"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email"
+                                   name="email"
+                                   class="form-control"
+                                   value="{{ form.email.value|default:'' }}">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">العنوان</label>
+                            <textarea name="address" class="form-control" rows="3">{{ form.address.value|default:'' }}</textarea>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'supplier_list' %}" class="btn btn-light me-2">إلغاء</a>
+                            <button type="submit" class="btn btn-primary px-5">حفظ البيانات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

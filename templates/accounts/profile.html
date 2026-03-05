@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}الملف الشخصي - {{ user.full_name|default:user.username }}{% endblock %}
+{% block extra_css %}
+    <style>
+    .profile-card {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .profile-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        padding: 40px 20px;
+        color: white;
+        text-align: center;
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        background: white;
+        color: #4f46e5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 50px;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .info-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        font-weight: 600;
+        color: #1a1d2e;
+    }
+    .badge-role {
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-weight: 600;
+        background: rgba(255,255,255,0.2);
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card profile-card border-0 shadow-sm mb-4">
+                <div class="profile-header text-center">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1">{{ user.full_name|default:user.username }}</h2>
+                    <div class="mb-3">
+                        <span class="badge-role">
+                            <i class="fas fa-shield-alt me-1"></i> {{ user.role.get_name_display|default:"بدون دور" }}
+                        </span>
+                    </div>
+                    <p class="mb-0 opacity-75">عضو منذ: {{ user.date_joined|date:"d M Y" }}</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <h5 class="border-bottom pb-2 mb-4 text-primary">
+                                    <i class="fas fa-info-circle me-2"></i> المعلومات الشخصية
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-600">الاسم الكامل</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
+                                    <input type="text"
+                                           name="full_name"
+                                           class="form-control"
+                                           value="{{ user.full_name }}"
+                                           required
+                                           placeholder="أدخل اسمك الكامل">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-600">اسم المستخدم</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-at"></i></span>
+                                    <input type="text"
+                                           class="form-control bg-light"
+                                           value="{{ user.username }}"
+                                           readonly>
+                                </div>
+                                <div class="form-text">اسم المستخدم لا يمكن تغييره.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-600">البريد الإلكتروني</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
+                                    <input type="email"
+                                           name="email"
+                                           class="form-control"
+                                           value="{{ user.email }}"
+                                           required
+                                           placeholder="example@domain.com">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-600">رقم الهاتف</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
+                                    <input type="text"
+                                           name="phone"
+                                           class="form-control"
+                                           value="{{ user.phone|default:'' }}"
+                                           placeholder="أدخل رقم الهاتف">
+                                </div>
+                            </div>
+                            <div class="col-md-12 mt-5 text-center">
+                                <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm">
+                                    <i class="fas fa-save me-2"></i> حفظ التغييرات
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}استيراد كتب - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">استيراد الكتب من ملف Excel</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">
+                        يجب أن يحتوي ملف Excel على الأعمدة التالية بالترتيب: (الاسم، الباركود، السعر، الكمية). ابدأ من الصف الثاني.
+                    </p>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label">اختر الملف (.xlsx)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-import me-1"></i> تحميل والاستيراد
+                            </button>
+                            <a href="{% url 'product_list' %}" class="btn btn-light">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

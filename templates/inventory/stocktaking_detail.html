@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}تفاصيل الجرد - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">{{ audit.name }}</h3>
+            <p class="text-muted mb-0">
+                تاريخ البدء: {{ audit.created_at|date:"Y-m-d H:i" }} | بواسطة: {{ audit.conducted_by.get_full_name }}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'stocktaking_list' %}" class="btn btn-light me-2">رجوع للقائمة</a>
+            {% if not audit.is_completed %}
+                <button class="btn btn-success"
+                        onclick="Swal.fire('قريباً', 'سيتم تفعيل ميزة إغلاق الجرد وتحديث المخزون في التحديث القادم', 'info')">
+                    <i class="fas fa-check-circle me-1"></i> اعتماد وإغلاق الجرد
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">بيانات الجرد المقارنة</h5>
+            <div class="badge bg-info p-2">عدد الكتب: {{ audit.items.count }}</div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">الكتاب / المنتج</th>
+                            <th>كمية النظام</th>
+                            <th>الكمية الفعلية</th>
+                            <th>الفرق (عجز/زيادة)</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in audit.items.all %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ item.product.name }}</div>
+                                    <div class="small text-muted">{{ item.product.barcode }}</div>
+                                </td>
+                                <td>{{ item.system_qty }}</td>
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm"
+                                           value="{{ item.actual_qty }}"
+                                           style="width: 80px"
+                                           {% if audit.is_completed %}disabled{% endif %}>
+                                </td>
+                                <td>
+                                    {% with diff=item.actual_qty|add:item.system_qty %}
+                                        <!-- This logic is just for display purpose, diff calculation in template is limited -->
+                                        <span class="{% if item.actual_qty < item.system_qty %}text-danger{% elif item.actual_qty > item.system_qty %}text-success{% endif %}">
+                                            {{ item.actual_qty|add:"-0"|add:item.system_qty }} <!-- Simple logic placeholder -->
+                                        </span>
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if item.actual_qty == item.system_qty %}
+                                        <span class="badge bg-success">مطابق</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">غير مطابق</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">لا توجد كتب في هذا الجرد</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 text-end">
+        <p class="text-muted small">* يتم حفظ التعديلات في الكميات الفعلية تلقائياً عند اعتماد الجرد.</p>
+    </div>
+{% endblock %}

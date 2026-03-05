@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}إضافة جرد جديد - نظام إدارة المكتبة{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">بدء عملية جرد مخزني</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">
+                        عند بدء عملية الجرد، سيقوم النظام بأخذ لقطة (Snapshot) للكميات الحالية لكل الكتب لمقارنتها لاحقاً بالكميات الفعلية.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label">اسم العملية (مثلاً: جرد نهاية العام 2024)</label>
+                            <input type="text"
+                                   name="session_name"
+                                   class="form-control"
+                                   placeholder="أدخل اسماً للعملية..."
+                                   required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">ملاحظات (اختياري)</label>
+                            <textarea name="notes"
+                                      class="form-control"
+                                      rows="2"
+                                      placeholder="أي ملاحظات تخص هذه الجلسة..."></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play me-1"></i> بدء عملية الجرد
+                            </button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'stocktaking_list' %}" class="btn btn-link text-muted">إلغاء والعودة</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

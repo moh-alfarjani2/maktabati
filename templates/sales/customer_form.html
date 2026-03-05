@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}إضافة عميل - POS الاحترافي{% endblock %}
+{% block content %}
+    <div class="container py-4 fade-in">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{% url 'customer_list' %}"
+                       class="btn btn-light rounded-circle me-3"><i class="fas fa-arrow-right"></i></a>
+                    <h3 class="fw-bold mb-0">إضافة عميل جديد</h3>
+                </div>
+                <div class="card shadow-sm border-0 p-4" style="border-radius: 16px;">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">الاسم الكامل</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">رقم الجوال</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">البريد الإلكتروني</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">العنوان</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors }}</div>{% endif %}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary py-3 fw-bold shadow">
+                                <i class="fas fa-save me-1"></i> حفظ بيانات العميل
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+    .form-control { border-radius: 10px; padding: 0.75rem 1rem; border: 2px solid #f1f5f9; }
+    .form-control:focus { border-color: #2563eb; box-shadow: none; }
+    </style>
+{% endblock %}

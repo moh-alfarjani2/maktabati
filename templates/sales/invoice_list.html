@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}سجل المبيعات - POS الاحترافي{% endblock %}
+{% block extra_css %}
+    <style>
+    .stat-card { border-radius: 12px; transition: transform 0.2s; border: none; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+    .stat-card:hover { transform: translateY(-3px); }
+    .status-pill { padding: 5px 12px; border-radius: 30px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; }
+    .status-completed { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+    .status-cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+    .payment-badge { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 8px; background: #f1f5f9; color: #475569; }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid fade-in">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">سجل المبيعات</h3>
+                <p class="text-muted small mb-0">تتبع جميع الحركات المالية وعمليات البيع اليومية.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'pos' %}" class="btn btn-primary btn-sm px-4 shadow-sm">
+                    <i class="fas fa-cash-register me-1"></i> العودة لنقطة البيع
+                </a>
+            </div>
+        </div>
+        <!-- Quick Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <h6 class="text-muted small">إجمالي مبيعات اليوم</h6>
+                        <h4 class="fw-bold text-primary mb-0">-- SAR</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card bg-white">
+                    <div class="card-body">
+                        <h6 class="text-muted small">عدد الفواتير</h6>
+                        <h4 class="fw-bold mb-0 text-dark">{{ invoices.count }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Table -->
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4">رقم الفاتورة</th>
+                            <th>التاريخ والوقت</th>
+                            <th>العميل</th>
+                            <th>الكاشير</th>
+                            <th>طريقة الدفع</th>
+                            <th>الإجمالي</th>
+                            <th>الحالة</th>
+                            <th class="pe-4 text-end">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for invoice in invoices %}
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-dark">#{{ invoice.invoice_id }}</span>
+                                </td>
+                                <td class="small">{{ invoice.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <div class="fw-bold">{{ invoice.customer.name|default:"عميل نقدي" }}</div>
+                                    {% if invoice.customer %}<small class="text-muted">{{ invoice.customer.phone }}</small>{% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark fw-normal"><i class="fas fa-user-circle me-1 text-secondary"></i> {{ invoice.cashier.get_full_name|default:invoice.cashier.username }}</span>
+                                </td>
+                                <td>
+                                    <span class="payment-badge">
+                                        {% if invoice.payment_method == 'cash' %}
+                                            <i class="fas fa-money-bill-wave me-1 text-success"></i> نقدي
+                                        {% elif invoice.payment_method == 'card' %}
+                                            <i class="fas fa-credit-card me-1 text-primary"></i> شبكة
+                                        {% else %}
+                                            <i class="fas fa-clock me-1 text-warning"></i> آجل
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark">{{ invoice.total_amount|intcomma }} SAR</span>
+                                </td>
+                                <td>
+                                    {% if invoice.status == 'completed' %}
+                                        <span class="status-pill status-completed">مكتملة</span>
+                                    {% else %}
+                                        <span class="status-pill status-cancelled">ملغاة</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group">
+                                        <a href="{% url 'invoice_pdf' invoice.id %}"
+                                           target="_blank"
+                                           class="btn btn-sm btn-light border"
+                                           title="طباعة PDF">
+                                            <i class="fas fa-file-pdf text-danger"></i>
+                                        </a>
+                                        {% if invoice.status == 'completed' %}
+                                            <button class="btn btn-sm btn-light border text-danger"
+                                                    onclick="cancelInvoice({{ invoice.id }})"
+                                                    title="إلغاء الفاتورة">
+                                                <i class="fas fa-times-circle"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="opacity-25 mb-3">
+                                        <i class="fas fa-receipt fa-4x"></i>
+                                    </div>
+                                    <h5 class="text-muted">لا توجد مبيعات مسجلة بعد</h5>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link shadow-sm border-0"
+                               href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link shadow-sm border-0">{{ page_obj.number }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link shadow-sm border-0"
+                               href="?page={{ page_obj.next_page_number }}">التالي</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+    function cancelInvoice(id) {
+        Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: "إلغاء الفاتورة سيؤدي إلى استعادة المخزون وحذف العملية محاسبياً.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'نعم، قم بالإلغاء',
+            cancelButtonText: 'تراجع'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/sales/invoices/${id}/cancel/`,
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire('تم!', 'تم إلغاء الفاتورة بنجاح.', 'success').then(() => location.reload());
+                        }
+                    },
+                    error: function(err) {
+                        Swal.fire('خطأ', err.responseJSON?.error || 'فشل في إلغاء الفاتورة', 'error');
+                    }
+                });
+            }
+        });
+    }
+    </script>
+{% endblock %}

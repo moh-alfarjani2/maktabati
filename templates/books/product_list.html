@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}إدارة المنتجات - نظام POS الاحترافي{% endblock %}
+{% block extra_css %}
+    <style>
+    .product-card-stat {
+        transition: transform 0.2s;
+        border-radius: 15px;
+    }
+    .product-card-stat:hover {
+        transform: translateY(-5px);
+    }
+    .search-container {
+        position: relative;
+    }
+    #search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: white;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        display: none;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .search-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .search-item:hover {
+        background: #f8f9fa;
+    }
+    .search-item:last-child {
+        border-bottom: none;
+    }
+    .table-vcenter td, .table-vcenter th {
+        vertical-align: middle;
+    }
+    .product-img-v {
+        width: 45px;
+        height: 45px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .badge-status {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid fade-in">
+        <!-- Header Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card product-card-stat bg-primary text-white border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">إجمالي المنتجات</h6>
+                                <h3 class="mb-0">{{ products.count }}</h3>
+                            </div>
+                            <div class="icon-shape bg-white-50 rounded-circle p-3">
+                                <i class="fas fa-boxes fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card product-card-stat bg-success text-white border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">نشط</h6>
+                                <h3 class="mb-0">{{ products.filter.is_active.count|default:"-" }}</h3>
+                            </div>
+                            <div class="icon-shape bg-white-50 rounded-circle p-3">
+                                <i class="fas fa-check-circle fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card product-card-stat bg-warning text-white border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">تحت حد التنبيه</h6>
+                                <h3 class="mb-0" id="low-stock-count">-</h3>
+                            </div>
+                            <div class="icon-shape bg-white-50 rounded-circle p-3">
+                                <i class="fas fa-exclamation-triangle fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card product-card-stat bg-danger text-white border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">خارج المخزون</h6>
+                                <h3 class="mb-0" id="out-stock-count">-</h3>
+                            </div>
+                            <div class="icon-shape bg-white-50 rounded-circle p-3">
+                                <i class="fas fa-times-circle fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Actions & Search -->
+        <div class="card shadow-sm border-0 mb-4 px-3 py-3">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-4 col-md-12">
+                    <div class="search-container">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text"
+                                   id="product-livesearch"
+                                   class="form-control border-start-0 ps-0"
+                                   placeholder="ابحث باسم المنتج، ID، أو الباركود..."
+                                   autocomplete="off">
+                        </div>
+                        <div id="search-results"></div>
+                    </div>
+                </div>
+                <div class="col-lg-8 col-md-12 text-lg-end">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'product_export' %}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-file-export me-1"></i> تصدير Excel
+                        </a>
+                        <a href="{% url 'product_import' %}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-file-import me-1"></i> استيراد
+                        </a>
+                    </div>
+                    <button class="btn btn-secondary btn-sm me-2" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> طباعة القائمة
+                    </button>
+                    <a href="{% url 'product_add' %}" class="btn btn-primary btn-sm px-4">
+                        <i class="fas fa-plus-circle me-1"></i> إضافة منتج جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Product Table -->
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover table-vcenter mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4" style="width: 60px">#</th>
+                            <th>المنتج</th>
+                            <th>ID / الباركود</th>
+                            <th>التصنيف</th>
+                            <th>سعر البيع</th>
+                            <th>المخزون الحالي</th>
+                            <th>الحالة</th>
+                            <th class="text-end pe-4">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for product in products %}
+                            <tr>
+                                <td class="ps-4">
+                                    {% if product.image %}
+                                        <img src="{{ product.image.url }}"
+                                             alt="{{ product.name }}"
+                                             width="45"
+                                             height="45"
+                                             class="product-img-v">
+                                    {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center product-img-v">
+                                            <i class="fas fa-image text-muted opacity-50"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ product.name }}</div>
+                                    <small class="text-muted">{{ product.description|truncatechars:40|default:"لا يوجد وصف" }}</small>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold text-primary">{{ product.product_id }}</div>
+                                    <div class="small text-muted">
+                                        {% with barcode=product.barcodes.first %}
+                                            <i class="fas fa-barcode me-1"></i> {{ barcode.barcode|default:"---" }}
+                                        {% endwith %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for category in product.categories.all %}
+                                            <span class="badge bg-light text-dark border">{{ category.name }}</span>
+                                        {% empty %}
+                                            <span class="badge bg-light text-dark border">عام</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-success">{{ product.selling_price|intcomma }} {{ settings.currency|default:"SAR" }}</div>
+                                    <small class="text-muted text-decoration-line-through small"
+                                           style="font-size: 0.7rem">التكلفة: {{ product.avg_cost|default:product.purchase_price|intcomma }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2 fw-bold {% if product.current_stock <= product.min_stock_level %}text-danger{% else %}text-dark{% endif %}">
+                                            {{ product.current_stock|floatformat:2 }}
+                                        </div>
+                                        <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
+                                            {% widthratio product.current_stock product.min_stock_level 100 as stock_percent %}
+                                            <div class="progress-bar {% if product.current_stock <= product.min_stock_level %}bg-danger{% else %}bg-success{% endif %}"
+                                                 role="progressbar"
+                                                 style="width: {% if product.current_stock > product.min_stock_level %}100{% else %}{{ stock_percent }}{% endif %}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted small" style="font-size: 0.7rem">الوحدة: {{ product.base_unit }}</small>
+                                </td>
+                                <td>
+                                    {% if product.is_active %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">نشط</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3">معطل</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light border ripple-none"
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+                                            <li>
+                                                <a class="dropdown-item"
+                                                   href="{% url 'product_edit' product_id=product.product_id %}"><i class="fas fa-edit me-2 text-primary"></i> تعديل المعلومات</a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item"
+                                                   href="#"
+                                                   onclick="showProductHistory('{{ product.id }}')"><i class="fas fa-history me-2 text-info"></i> سجل الحركة</a>
+                                            </li>
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger delete-product-btn"
+                                                   href="javascript:void(0)"
+                                                   data-url="{% url 'product_delete' product_id=product.product_id %}"
+                                                   data-name="{{ product.name }}"><i class="fas fa-trash-alt me-2"></i> حذف المنتج</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-cart-2130356-1800917.png"
+                                         style="width: 200px"
+                                         class="opacity-50 mb-3">
+                                    <h5 class="text-muted">لا توجد منتجات حالياً</h5>
+                                    <a href="{% url 'product_add' %}" class="btn btn-primary mt-2">أضف منتجك الأول الآن</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if is_paginated %}
+                <div class="card-footer bg-white border-top-0 py-3">
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-right"></i></a>
+                                </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-left"></i></a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Quick View Offcanvas (Future) -->
+    <div class="offcanvas offcanvas-end"
+         tabindex="-1"
+         id="productDetailOffcanvas"
+         style="width: 450px">
+        <div class="offcanvas-header bg-light">
+            <h5 class="offcanvas-title fw-bold">تفاصيل المنتج</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body" id="offcanvas-product-body">
+            <!-- Content loaded via AJAX -->
+        </div>
+    </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+    $(document).ready(function() {
+        // Live Search Logic
+        let searchTimeout;
+        $('#product-livesearch').on('input', function() {
+            clearTimeout(searchTimeout);
+            let query = $(this).val();
+            if (query.length < 2) {
+                $('#search-results').hide();
+                return;
+            }
+
+            searchTimeout = setTimeout(function() {
+                $.ajax({
+                    url: "{% url 'product_search_ajax' %}",
+                    data: { 'q': query },
+                    success: function(data) {
+                        let html = '';
+                        if (data.results.length > 0) {
+                            data.results.forEach(product => {
+                                html += `
+                                <div class="search-item d-flex align-items-center" onclick="window.location.href='/books/edit/${product.product_id}/'">
+                                    <div class="ms-3">
+                                        <div class="small fw-bold text-dark">${product.name}</div>
+                                        <div class="text-muted extra-small" style="font-size: 0.7rem">${product.product_id} | ${product.barcode}</div>
+                                    </div>
+                                    <div class="me-auto text-end">
+                                        <div class="text-success fw-bold small">${product.price} SAR</div>
+                                        <div class="text-muted extra-small" style="font-size: 0.7rem">المخزون: ${product.stock}</div>
+                                    </div>
+                                </div>`;
+                            });
+                        } else {
+                            html = '<div class="p-3 text-center text-muted">لا توجد نتائج</div>';
+                        }
+                        $('#search-results').html(html).show();
+                    }
+                });
+            }, 300);
+        });
+
+        // Close search results when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.search-container').length) {
+                $('#search-results').hide();
+            }
+        });
+
+        // Initialize Stats (Optional: fetch via API for real-time)
+        // For now, let's keep it static from context but we could enhance this.
+        updateStockBadges();
+
+        // SweetAlert2 Delete Confirmation
+        $('.delete-product-btn').on('click', function(e) {
+            e.preventDefault();
+            const url = $(this).data('url');
+            const name = $(this).data('name');
+
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: `سيتم حذف المنتج "${name}" بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'نعم، احذف الآن',
+                cancelButtonText: 'إلغاء',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'btn btn-danger px-4 mx-2',
+                    cancelButton: 'btn btn-secondary px-4 mx-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        });
+    });
+
+    function updateStockBadges() {
+        // Simple client-side count for the current page
+        let low = 0;
+        let out = 0;
+        $('.progress-bar.bg-danger').each(function() {
+            let stock = parseFloat($(this).closest('tr').find('.fw-bold.text-danger').text());
+            if (stock <= 0) out++;
+            else low++;
+        });
+        $('#low-stock-count').text(low);
+        $('#out-stock-count').text(out);
+    }
+    </script>
+{% endblock %}

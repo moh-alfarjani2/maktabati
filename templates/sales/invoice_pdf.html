@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+        @page {
+            size: 80mm 200mm;
+            margin: 0;
+        }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11px;
+            margin: 0;
+            padding: 10mm 5mm;
+            width: 70mm;
+            color: #000;
+        }
+        .text-center { text-align: center; }
+        .text-end { text-align: left; } /* logical end in RTL */
+        .text-start { text-align: right; } /* logical start in RTL */
+        
+        .header { margin-bottom: 5mm; border-bottom: 1px dashed #000; padding-bottom: 3mm; }
+        .store-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; }
+        .invoice-title { font-size: 13px; margin-bottom: 2mm; text-decoration: underline; }
+        
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 1mm; }
+        
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 3mm; margin-bottom: 3mm; }
+        .items-table th { border-bottom: 1px solid #000; padding-bottom: 1mm; font-size: 10px; }
+        .items-table td { padding-top: 2mm; vertical-align: top; }
+        
+        .totals { border-top: 1px dashed #000; padding-top: 2mm; margin-top: 2mm; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 1mm; }
+        .grand-total { font-size: 14px; font-weight: bold; margin-top: 2mm; border-top: 1px solid #000; padding-top: 1mm; }
+        
+        .footer { margin-top: 8mm; border-top: 1px solid #000; padding-top: 3mm; font-size: 9px; line-height: 1.4; }
+        .qr-placeholder { margin-top: 5mm; }
+        </style>
+    </head>
+    <body>
+        <div class="header text-center">
+            <div class="store-name text-uppercase">{{ settings.site_name|default:"POS SYSTEM" }}</div>
+            <div class="invoice-title">فاتورة ضريبية مبسطة</div>
+            <div style="font-size: 9px;">ضريبة القيمة المضافة: 15%</div>
+        </div>
+        <div class="info-section">
+            <div class="info-row">
+                <span>رقم الفاتورة:</span>
+                <strong>#{{ invoice.invoice_id }}</strong>
+            </div>
+            <div class="info-row">
+                <span>التاريخ:</span>
+                <span>{{ invoice.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="info-row">
+                <span>العميل:</span>
+                <span>{{ invoice.customer.name|default:"عميل نقدي" }}</span>
+            </div>
+            <div class="info-row">
+                <span>الكاشير:</span>
+                <span>{{ invoice.cashier.get_full_name|default:invoice.cashier.username }}</span>
+            </div>
+        </div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="text-start">الصنف</th>
+                    <th class="text-center">الكمية</th>
+                    <th class="text-end">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items.all %}
+                    <tr>
+                        <td class="text-start">
+                            {{ item.product.name }}
+                            <br>
+                            <small style="font-size: 8px;">@ {{ item.unit_price }}</small>
+                        </td>
+                        <td class="text-center">{{ item.quantity|floatformat:0 }}</td>
+                        <td class="text-end">{{ item.subtotal|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="totals">
+            <div class="total-row">
+                <span>المجموع (غير شامل الضريبة):</span>
+                <span>{{ invoice.subtotal|floatformat:2 }} SAR</span>
+            </div>
+            <div class="total-row">
+                <span>ضريبة القيمة المضافة (15%):</span>
+                <span>{{ invoice.tax_amount|floatformat:2 }} SAR</span>
+            </div>
+            {% if invoice.discount_amount > 0 %}
+                <div class="total-row">
+                    <span>الخصم:</span>
+                    <span>-{{ invoice.discount_amount|floatformat:2 }} SAR</span>
+                </div>
+            {% endif %}
+            <div class="total-row grand-total">
+                <span>الإجمالي النهائي:</span>
+                <span>{{ invoice.total_amount|floatformat:2 }} SAR</span>
+            </div>
+        </div>
+        <div class="footer text-center">
+            <p>شكراً لزيارتكم!</p>
+            <p>لا يسمح باسترجاع الكتب الورقية بعد فتح الغلاف</p>
+            <div class="qr-placeholder">
+                <!-- Simplified text for QR in PDF generation usually requires a library,
+                 but we'll leave space or use a placeholder if needed -->
+                [رقم الفاتورة المرجعي: {{ invoice.invoice_id }}]
+            </div>
+        </div>
+    </body>
+</html>
