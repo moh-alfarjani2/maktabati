@@ -3,7 +3,7 @@ from .views import (
     SupplierListView, SupplierCreateView, 
     PurchaseInvoiceListView, PurchaseInvoiceCreateView, 
     PurchaseInvoiceDetailView, PurchaseInvoiceUpdateView, 
-    approve_invoice
+    approve_invoice, export_purchase_pdf
 )
 
 urlpatterns = [
@@ -13,5 +13,6 @@ urlpatterns = [
     path('invoices/add/', PurchaseInvoiceCreateView.as_view(), name='invoice_add'),
     path('invoices/<str:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/<str:invoice_id>/edit/', PurchaseInvoiceUpdateView.as_view(), name='invoice_edit'),
+    path('invoices/<str:invoice_id>/pdf/', export_purchase_pdf, name='invoice_pdf'),
     path('invoices/<str:invoice_id>/approve/', approve_invoice, name='approve_invoice'),
 ]

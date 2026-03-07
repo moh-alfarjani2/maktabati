@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11pt;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header { border-bottom: 2px solid #ef4444; padding-bottom: 10mm; margin-bottom: 10mm; }
+        .store-name { font-size: 24pt; font-weight: bold; color: #ef4444; }
+        .invoice-title { font-size: 18pt; font-weight: bold; margin-top: 5mm; }
+        
+        .info-table { width: 100%; margin-bottom: 10mm; }
+        .info-table td { vertical-align: top; width: 50%; }
+        .label { color: #64748b; font-size: 9pt; font-weight: bold; text-transform: uppercase; }
+        .value { font-size: 11pt; font-weight: bold; }
+        
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10mm; }
+        .items-table th { background-color: #fef2f2; border-bottom: 2px solid #fee2e2; padding: 3mm; text-align: right; font-size: 10pt; }
+        .items-table td { border-bottom: 1px solid #fee2e2; padding: 3mm; }
+        
+        .totals-section { float: left; width: 300px; margin-top: 5mm; }
+        .total-row { display: flex; justify-content: space-between; padding: 2mm 0; border-bottom: 1px solid #fef2f2; }
+        .grand-total { border-top: 2px solid #ef4444; color: #ef4444; font-size: 14pt; font-weight: bold; padding-top: 3mm; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; border-top: 1px solid #e2e8f0; padding-top: 5mm; font-size: 9pt; text-align: center; color: #64748b; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="store-name">{{ settings.site_name|default:"POS SYSTEM" }}</div>
+            <div class="invoice-title">تقرير بضائع تالفة / مفقودة</div>
+        </div>
+        <table class="info-table">
+            <tr>
+                <td>
+                    <div class="label">سبب التلف:</div>
+                    <div class="value">{{ report.reason }}</div>
+                    <div class="label" style="margin-top: 3mm;">الحالة:</div>
+                    <div class="value">{{ report.is_approved|yesno:"معتمد - مخصوم,مسودة - غير مخصوم" }}</div>
+                </td>
+                <td style="text-align: left;">
+                    <div class="label">رقم التقرير:</div>
+                    <div class="value">#{{ report.loss_id }}</div>
+                    <div class="label" style="margin-top: 3mm;">التاريخ:</div>
+                    <div class="value">{{ report.damage_date|date:"Y-m-d" }}</div>
+                </td>
+            </tr>
+        </table>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الكتاب / الصنف</th>
+                    <th style="text-align: center;">الكمية</th>
+                    <th style="text-align: left;">تكلفة الوحدة</th>
+                    <th style="text-align: left;">إجمالي الخسارة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report.items.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div style="font-weight: bold;">{{ item.product.name }}</div>
+                            <div style="font-size: 9pt; color: #64748b;">{{ item.product.product_id }}</div>
+                        </td>
+                        <td style="text-align: center;">{{ item.quantity|floatformat:0 }}</td>
+                        <td style="text-align: left;">{{ item.unit_cost|floatformat:2 }}</td>
+                        <td style="text-align: left;">{{ item.total_loss|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="overflow: hidden;">
+            <div class="totals-section" style="text-align: left;">
+                <div class="total-row grand-total">
+                    <span>إجمالي الخسارة:</span>
+                    <span>{{ report.total_loss|floatformat:2 }} SAR</span>
+                </div>
+            </div>
+        </div>
+        {% if report.notes %}
+            <div style="margin-top: 10mm;
+                        padding: 5mm;
+                        background-color: #f8fafc;
+                        border-radius: 5px">
+                <div class="label">ملاحظات:</div>
+                <div style="font-size: 10pt;">{{ report.notes }}</div>
+            </div>
+        {% endif %}
+        <div class="footer">طبعت بواسطة: {{ user.get_full_name|default:user.username }} في {{ now|date:"Y-m-d H:i" }}</div>
+    </body>
+</html>

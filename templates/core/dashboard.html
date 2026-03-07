@@ -11,6 +11,13 @@
     .low-stock-item { padding: 12px; border-radius: 10px; border-right: 4px solid #ef4444; background: #fef2f2; margin-bottom: 10px; }
     .activity-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
     .activity-item:last-child { border-bottom: none; }
+    .bg-dark-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+    .bg-soft-blue { background: rgba(99,179,237,0.25); }
+    .text-soft-blue { color: #63b3ed; }
+    .h-400px { height: 400px; }
+    .h-320px { height: 320px; }
+    .h-300px { height: 300px; }
+    .h-200px { height: 200px; }
     </style>
 {% endblock %}
 {% block content %}
@@ -18,16 +25,130 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="fw-bold mb-1">مرحباً بك، {{ request.user.get_full_name|default:request.user.username }} 👋</h3>
-                <p class="text-muted small mb-0">نظرة عامة على أداء مكتبتك اليوم ({{ today_date|date:"Y-m-d" }})</p>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-calendar-alt me-1 text-primary"></i>
+                    <span class="fw-bold text-dark">{{ date_from_display }}</span>
+                    <i class="fas fa-arrow-left mx-1 text-muted small"></i>
+                    <span class="fw-bold text-dark">{{ date_to_display }}</span>
+                </p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary btn-sm px-3 shadow-sm rounded-pill">
-                    <i class="fas fa-download me-1"></i> تحميل التقرير
+                <!-- Date Filter Button -->
+                <button class="btn btn-outline-primary btn-sm px-3 shadow-sm rounded-pill"
+                        data-bs-toggle="modal"
+                        data-bs-target="#dateFilterModal">
+                    <i class="fas fa-sliders me-1"></i> تصفية الفترة
                 </button>
                 <a href="{% url 'pos' %}"
                    class="btn btn-primary btn-sm px-4 shadow-sm rounded-pill"><i class="fas fa-cash-register me-1"></i> نقطة البيع</a>
             </div>
         </div>
+        <!-- ===== Date Filter Modal ===== -->
+        <div class="modal fade"
+             id="dateFilterModal"
+             tabindex="-1"
+             aria-labelledby="dateFilterModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-md">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="modal-header border-0 pb-3 pt-4 px-4 bg-primary text-white">
+                        <div>
+                            <h5 class="modal-title fw-bold text-white mb-1" id="dateFilterModalLabel">
+                                <i class="fas fa-filter me-2"></i> تصفية حسب الفترة الزمنية
+                            </h5>
+                            <p class="text-white opacity-75 small mb-0">اختر فترة جاهزة أو حدد نطاقًا مخصصًا</p>
+                        </div>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"></button>
+                    </div>
+                    <!-- Modal Body -->
+                    <div class="modal-body p-4">
+                        <form method="get" action="{% url 'dashboard' %}" id="dateFilterForm">
+                            <!-- Quick Presets -->
+                            <p class="text-muted small fw-bold mb-2 text-uppercase">اختصارات سريعة</p>
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="hour">
+                                    <i class="fas fa-clock me-1 text-primary"></i> هذه الساعة
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="today">
+                                    <i class="fas fa-sun me-1 text-warning"></i> اليوم
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="week">
+                                    <i class="fas fa-calendar-week me-1 text-success"></i> هذا الأسبوع
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="last_week">
+                                    <i class="fas fa-chevron-right me-1 text-secondary"></i> الأسبوع الماضي
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="month">
+                                    <i class="fas fa-calendar-days me-1 text-info"></i> هذا الشهر
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="last_month">
+                                    <i class="fas fa-history me-1 text-secondary"></i> الشهر الماضي
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="year">
+                                    <i class="fas fa-calendar me-1 text-danger"></i> هذه السنة
+                                </button>
+                                <button type="button"
+                                        class="btn btn-light border rounded-pill btn-sm preset-btn"
+                                        data-preset="last_year">
+                                    <i class="fas fa-rotate-right me-1 text-secondary"></i> السنة الماضية
+                                </button>
+                            </div>
+                            <!-- Custom Range -->
+                            <div class="p-3 rounded-3 mb-3 bg-light border">
+                                <p class="text-muted small fw-bold mb-3 text-uppercase">نطاق مخصص</p>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">من</label>
+                                        <input type="datetime-local"
+                                               name="date_from"
+                                               id="input_date_from"
+                                               class="form-control form-control-sm rounded-3"
+                                               value="{{ date_from }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">إلى</label>
+                                        <input type="datetime-local"
+                                               name="date_to"
+                                               id="input_date_to"
+                                               class="form-control form-control-sm rounded-3"
+                                               value="{{ date_to }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Actions -->
+                            <div class="d-flex gap-2">
+                                <button type="submit"
+                                        class="btn btn-primary flex-grow-1 rounded-pill fw-bold">
+                                    <i class="fas fa-search me-1"></i> تطبيق الفلتر
+                                </button>
+                                <a href="{% url 'dashboard' %}"
+                                   class="btn btn-light border rounded-pill px-3">
+                                    <i class="fas fa-xmark"></i> إعادة تعيين
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== End Modal ===== -->
         <!-- Statistics Grid -->
         <div class="row g-4 mb-4">
             <div class="col-md-3">
@@ -38,7 +159,7 @@
                         </div>
                         <span class="text-success small fw-bold mt-1">+12% <i class="fas fa-arrow-up"></i></span>
                     </div>
-                    <div class="text-muted small fw-bold">إجمالي مبيعات اليوم</div>
+                    <div class="text-muted small fw-bold">إجمالي المبيعات للفترة</div>
                     <div class="h3 fw-800 mb-0">
                         {{ today_sales|intcomma }} <small class="fs-6">SAR</small>
                     </div>
@@ -52,23 +173,22 @@
                         </div>
                         <span class="text-success small fw-bold mt-1">+5% <i class="fas fa-arrow-up"></i></span>
                     </div>
-                    <div class="text-muted small fw-bold">أرباح اليوم التقديرية</div>
+                    <div class="text-muted small fw-bold">الأرباح التقديرية للفترة</div>
                     <div class="h3 fw-800 mb-0 text-success">
                         {{ today_profit|intcomma }} <small class="fs-6 text-muted">SAR</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card shadow-sm p-4 text-white"
-                     style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%)">
+                <div class="card stat-card shadow-sm p-4 text-white bg-dark-gradient">
                     <div class="d-flex justify-content-between mb-3">
-                        <div class="icon-box bg-white bg-opacity-20 text-white">
-                            <i class="fas fa-warehouse fa-lg"></i>
+                        <div class="icon-box bg-soft-blue">
+                            <i class="fas fa-boxes-stacked fa-lg text-soft-blue"></i>
                         </div>
                     </div>
                     <div class="text-white text-opacity-75 small fw-bold">قيمة المخزون (بالتكلفة)</div>
                     <div class="h3 fw-800 mb-0">
-                        {{ inventory_value|intcomma }} <small class="fs-6 opacity-50">SAR</small>
+                        {{ inventory_value|floatformat:2|intcomma }} <small class="fs-6 opacity-50">SAR</small>
                     </div>
                 </div>
             </div>
@@ -89,15 +209,15 @@
         <div class="row g-4">
             <!-- Main Chart -->
             <div class="col-lg-8">
-                <div class="chart-container shadow-sm mb-4">
+                <div class="chart-container shadow-sm mb-4 position-relative h-400px">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bold mb-0">تحليل المبيعات (آخر 7 أيام)</h5>
+                        <h5 class="fw-bold mb-0">تحليل المبيعات للفترة</h5>
                         <div class="dropdown">
                             <button class="btn btn-light btn-sm rounded-pill px-3"
                                     data-bs-toggle="dropdown">أسبوعي</button>
                         </div>
                     </div>
-                    <canvas id="salesChart" style="height: 320px;"></canvas>
+                    <canvas id="salesChart" class="h-320px"></canvas>
                 </div>
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                     <div class="card-header bg-white py-3 border-0 d-flex justify-content-between">
@@ -133,9 +253,9 @@
             </div>
             <!-- Sidebar Info -->
             <div class="col-lg-4">
-                <div class="chart-container shadow-sm mb-4">
+                <div class="chart-container shadow-sm mb-4 position-relative h-300px">
                     <h5 class="fw-bold mb-4">الأكثر مبيعاً</h5>
-                    <canvas id="topProductsChart" style="height: 200px;"></canvas>
+                    <canvas id="topProductsChart" class="h-200px"></canvas>
                 </div>
                 <div class="card border-0 shadow-sm rounded-4 p-4">
                     <h5 class="fw-bold mb-4">تنبيهات المخزون 🚨</h5>
@@ -169,10 +289,10 @@
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: {{ labels|safe }},
+            labels: JSON.parse('{{ labels|escapejs }}'),
             datasets: [{
                 label: 'المبيعات اليومية (SAR)',
-                data: {{ values|safe }},
+                data: JSON.parse('{{ values|escapejs }}'),
                 borderColor: '#2563eb',
                 backgroundColor: 'rgba(37, 99, 235, 0.1)',
                 fill: true,
@@ -197,9 +317,9 @@
     new Chart(ctx2, {
         type: 'doughnut',
         data: {
-            labels: {{ top_products_labels|safe }},
+            labels: JSON.parse('{{ top_products_labels|escapejs }}'),
             datasets: [{
-                data: {{ top_products_values|safe }},
+                data: JSON.parse('{{ top_products_values|escapejs }}'),
                 backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
             }]
         },
@@ -208,6 +328,55 @@
             maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10 } } } }
         }
+    });
+
+    // ===== Date Range Filter Presets =====
+    function fmtDate(d) {
+        // Format as YYYY-MM-DDTHH:MM for datetime-local input
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const preset = this.dataset.preset;
+            const now = new Date();
+            let from, to = new Date(now);
+
+            // Round "to" to nearest current minute
+            to.setSeconds(0, 0);
+
+            if (preset === 'hour') {
+                from = new Date(now);
+                from.setMinutes(from.getMinutes() - 60, 0, 0);
+            } else if (preset === 'today') {
+                from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+            } else if (preset === 'week') {
+                const day = now.getDay(); // 0=Sun
+                from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day, 0, 0, 0);
+            } else if (preset === 'last_week') {
+                const day = now.getDay();
+                from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day - 7, 0, 0, 0);
+                to = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day - 1, 23, 59, 0);
+            } else if (preset === 'month') {
+                from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+            } else if (preset === 'last_month') {
+                from = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+                to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 0);
+            } else if (preset === 'year') {
+                from = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+            } else if (preset === 'last_year') {
+                from = new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0);
+                to = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 0);
+            }
+
+            document.getElementById('input_date_from').value = fmtDate(from);
+            document.getElementById('input_date_to').value = fmtDate(to);
+
+            // Highlight selected preset
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('btn-primary', 'text-white'));
+            this.classList.add('btn-primary', 'text-white');
+        });
     });
     </script>
 {% endblock %}

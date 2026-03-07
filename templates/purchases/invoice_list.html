@@ -34,20 +34,8 @@
             <div class="col-md-4">
                 <div class="card invoice-card-stat border-0 shadow-sm">
                     <div class="card-body">
-                        <h6 class="text-muted small">إجمالي المشتريات (المعتمدة)</h6>
-                        <h4 class="fw-bold mb-0 text-primary">
-                            {% with total=invoices.all|dictsort:"total_amount" %}{% endwith %}
-                            <!-- Placeholder for logic or aggregate -->
-                            -- SAR
-                        </h4>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card invoice-card-stat border-0 shadow-sm">
-                    <div class="card-body">
-                        <h6 class="text-muted small">فواتير قيد الانتظار (Draft)</h6>
-                        <h4 class="fw-bold mb-0 text-warning">{{ invoices.filter.status|default:"-" }}</h4>
+                        <h6 class="text-muted small">إجمالي المشتريات</h6>
+                        <h4 class="fw-bold mb-0 text-primary">{{ approved_total|intcomma }} SAR</h4>
                     </div>
                 </div>
             </div>
@@ -55,16 +43,17 @@
         <!-- Table -->
         <div class="card shadow-sm border-0 overflow-hidden">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 table-sortable"
+                       id="purchases_table">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th class="ps-4">رقم الفاتورة</th>
-                            <th>المورد</th>
-                            <th>التاريخ</th>
-                            <th>طريقة الدفع</th>
-                            <th>الإجمالي</th>
-                            <th>الحالة</th>
-                            <th class="pe-4 text-end">الإجراءات</th>
+                            <th class="ps-4" data-sort-field="invoice_id">رقم الفاتورة</th>
+                            <th data-sort-field="supplier__name">المورد</th>
+                            <th data-sort-field="created_at">التاريخ</th>
+                            <th data-sort-field="payment_method">طريقة الدفع</th>
+                            <th data-sort-field="total_amount">الإجمالي</th>
+                            <th data-sort-field="status">الحالة</th>
+                            <th class="pe-4 text-end no-sort">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -102,21 +91,18 @@
                                     <div class="btn-group">
                                         <a href="{% url 'invoice_detail' invoice.invoice_id %}"
                                            class="btn btn-sm btn-light border"
+                                           style="position: relative;
+                                                  z-index: 5"
                                            title="عرض التفاصيل">
                                             <i class="fas fa-eye text-info"></i>
                                         </a>
-                                        {% if invoice.status == 'draft' %}
-                                            <a href="{% url 'invoice_edit' invoice.invoice_id %}"
-                                               class="btn btn-sm btn-light border"
-                                               title="تعديل">
-                                                <i class="fas fa-edit text-primary"></i>
-                                            </a>
-                                            <a href="{% url 'approve_invoice' invoice.invoice_id %}"
-                                               class="btn btn-sm btn-success border"
-                                               onclick="return confirm('هل أنت متأكد من اعتماد الفاتورة؟ سيتم تحديث المخزون فوراً.')">
-                                                <i class="fas fa-check"></i> اعتماد
-                                            </a>
-                                        {% endif %}
+                                        <a href="{% url 'invoice_edit' invoice.invoice_id %}"
+                                           class="btn btn-sm btn-light border"
+                                           style="position: relative;
+                                                  z-index: 5"
+                                           title="تعديل">
+                                            <i class="fas fa-edit text-primary"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

@@ -10,7 +10,7 @@ def navbar_settings(request):
         {'name': 'الرئيسية', 'url': 'dashboard', 'icon': 'fas fa-home', 'priority': 10},
         {'name': 'نقطة البيع', 'url': 'pos', 'icon': 'fas fa-cash-register', 'priority': 9},
         {'name': 'الكتب', 'url': 'product_list', 'icon': 'fas fa-book', 'priority': 8},
-        {'name': 'المخزون', 'url': 'inventory_list', 'icon': 'fas fa-warehouse', 'priority': 7},
+        {'name': 'المخزون', 'url': 'inventory_list', 'icon': 'fas fa-boxes', 'priority': 7},
         {'name': 'المشتريات', 'url': 'invoice_purchase_list', 'icon': 'fas fa-truck', 'priority': 6},
         {'name': 'المبيعات', 'url': 'invoice_list', 'icon': 'fas fa-file-invoice-dollar', 'priority': 5},
         {'name': 'العملاء', 'url': 'customer_list', 'icon': 'fas fa-users', 'priority': 4},

@@ -4,6 +4,13 @@ from django.contrib import messages
 from .models import DamageReport, DamageItem
 from apps.books.models import Product
 from apps.accounts.decorators import role_required
+from apps.accounts.models import ActivityLog
+from apps.core.models import SystemSettings
+from django.utils import timezone
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from io import BytesIO
 
 
 @role_required(allowed_roles=['admin', 'storekeeper'])
@@ -40,13 +47,6 @@ def damage_create(request):
                     unit_cost=cost
                 )
 
-        ActivityLog.objects.create(
-            user=request.user,
-            action="create",
-            action_description=f"تم إنشاء تقرير تالف جديد #{report.loss_id}",
-            object_type="DamageReport",
-            object_id=report.loss_id
-        )
         messages.success(request, f'تم إنشاء تقرير التالف {report.loss_id}')
         return redirect('damages:detail', loss_id=report.loss_id)
 
@@ -65,7 +65,6 @@ def damage_approve(request, loss_id):
     if request.method == 'POST':
         try:
             report.approve(request.user)
-            from apps.accounts.models import ActivityLog
             ActivityLog.objects.create(
                 user=request.user,
                 action="approve",
@@ -77,3 +76,28 @@ def damage_approve(request, loss_id):
         except ValueError as e:
             messages.error(request, str(e))
     return redirect('damages:detail', loss_id=report.loss_id)
+
+
+@role_required(allowed_roles=['admin', 'storekeeper'])
+def export_damage_pdf(request, loss_id):
+    report = get_object_or_404(DamageReport, loss_id=loss_id)
+    template_path = 'damages/damage_pdf.html'
+    context = {
+        'report': report,
+        'settings': SystemSettings.objects.first(),
+        'user': request.user,
+        'now': timezone.now()
+    }
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename="damage_report_{report.loss_id}.pdf"'
+    
+    template = get_template(template_path)
+    html = template.render(context)
+    
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    if not pdf.err:
+        return HttpResponse(result.getvalue(), content_type='application/pdf')
+    return HttpResponse('خطأ في توليد ملف PDF', status=400)

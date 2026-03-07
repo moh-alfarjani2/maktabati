@@ -20,18 +20,15 @@
     <div class="container py-4 fade-in">
         <!-- Actions Bar -->
         <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-            <a href="{% url 'invoice_list' %}" class="btn btn-light"><i class="fas fa-arrow-right me-1"></i> العودة للقائمة</a>
+            <a href="{% url 'invoice_purchase_list' %}" class="btn btn-light"><i class="fas fa-arrow-right me-1"></i> العودة للقائمة</a>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary" onclick="window.print()">
-                    <i class="fas fa-print me-1"></i> طباعة
-                </button>
-                {% if invoice.status == 'draft' %}
-                    <a href="{% url 'invoice_edit' invoice.invoice_id %}"
-                       class="btn btn-primary"><i class="fas fa-edit me-1"></i> تعديل الفاتورة</a>
-                    <a href="{% url 'approve_invoice' invoice.invoice_id %}"
-                       class="btn btn-success"
-                       onclick="return confirm('هل أنت متأكد من اعتماد الفاتورة؟ سيتم زيادة المخزون فوراً.')"><i class="fas fa-check me-1"></i> اعتماد واستلام</a>
-                {% endif %}
+                <a href="{% url 'invoice_pdf' invoice.invoice_id %}"
+                   target="_blank"
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-file-pdf me-1"></i> تحميل PDF
+                </a>
+                <a href="{% url 'invoice_edit' invoice.invoice_id %}"
+                   class="btn btn-primary shadow-sm"><i class="fas fa-edit me-1"></i> تعديل الفاتورة</a>
             </div>
         </div>
         <!-- Invoice Card -->
@@ -97,11 +94,39 @@
                                     <td class="ps-4 text-muted small">{{ forloop.counter }}</td>
                                     <td>
                                         <div class="fw-bold text-dark">{{ item.product.name }}</div>
-                                        <small class="text-muted">ID: {{ item.product.product_id }}</small>
+                                        <div class="small text-muted">ID: {{ item.product.product_id }}</div>
+                                        {% if item.is_package %}
+                                            <div class="mt-1">
+                                                <span class="badge bg-primary-subtle text-primary border"
+                                                      style="font-size:0.65rem">نظام العبوات</span>
+                                                <div class="small text-secondary mt-1">
+                                                    <strong>العبوة:</strong> {{ item.package_qty|floatformat:2 }} × {{ item.pieces_per_package|floatformat:2 }} قطعة
+                                                    | <strong>شراء:</strong> {{ item.package_purchase_price|intcomma }}
+                                                    | <strong>بيع:</strong> {{ item.package_selling_price|intcomma }}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        <div class="small text-secondary mt-1">
+                                            <strong>القطعة:</strong>
+                                            شراء {{ item.unit_price|intcomma }}
+                                            | بيع {{ item.suggested_selling_price|intcomma }}
+                                            | ربح <span class="text-success fw-bold">{{ item.profit_margin|floatformat:1 }}%</span>
+                                        </div>
                                     </td>
-                                    <td class="text-center fw-bold">{{ item.quantity|floatformat:2 }}</td>
-                                    <td class="text-end">{{ item.unit_price|intcomma }} SAR</td>
-                                    <td class="text-end pe-4 fw-bold">{{ item.subtotal|intcomma }} SAR</td>
+                                    <td class="text-center">
+                                        <div class="fw-bold">{{ item.quantity|floatformat:2 }}</div>
+                                        <small class="text-muted">قطعة</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <div>{{ item.unit_price|intcomma }} SAR</div>
+                                        <small class="text-muted">للقطعة</small>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="fw-bold text-primary">{{ item.total_price|intcomma }} SAR</div>
+                                        {% if item.tax > 0 %}
+                                            <small class="text-muted">شامل ضريبة {{ item.tax|floatformat:0 }}%</small>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>

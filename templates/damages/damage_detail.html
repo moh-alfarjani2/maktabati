@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}تفاصيل تقرير التالف #{{ report.loss_id }}{% endblock %}
+{% block extra_css %}
+    <style>
+    .report-card { border-radius: 20px; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.08); overflow: hidden; }
+    .status-banner { padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+    .status-draft { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .status-approved { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container py-4 fade-in">
+        <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+            <a href="{% url 'damages:list' %}" class="btn btn-light"><i class="fas fa-arrow-right me-1"></i> العودة للقائمة</a>
+            <div class="d-flex gap-2">
+                <a href="{% url 'damages:pdf' report.loss_id %}"
+                   target="_blank"
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-file-pdf me-1"></i> تحميل PDF
+                </a>
+                {% if not report.is_approved %}
+                    <form action="{% url 'damages:approve' report.loss_id %}"
+                          method="POST"
+                          class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="btn btn-success"
+                                onclick="return confirm('بالاعتماد سيتم خصم الكميات من المخزون نهائياً. هل تريد الاستمرار؟')">
+                            <i class="fas fa-check-circle me-1"></i> اعتماد التقرير وخصم المخزون
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card report-card p-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="row mb-5">
+                    <div class="col-md-6">
+                        <h2 class="fw-bold text-primary mb-1">{{ settings.site_name|default:"POS SYSTEM" }}</h2>
+                        <p class="text-muted small">تقرير بضائع تالفة / مفقودة</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h4 class="fw-bold mb-0">تقرير تالف #{{ report.loss_id }}</h4>
+                        <div class="text-muted">{{ report.damage_date|date:"Y-m-d" }}</div>
+                    </div>
+                </div>
+                <div class="status-banner {% if report.is_approved %}status-approved{% else %}status-draft{% endif %} d-flex align-items-center gap-3">
+                    <i class="fas {% if report.is_approved %}fa-check-double{% else %}fa-exclamation-triangle{% endif %} fa-2x"></i>
+                    <div>
+                        <h5 class="fw-bold mb-1">الحالة: {{ report.is_approved|yesno:"معتمد ومخصوم من المخزون,بانتظار الاعتماد (مسودة)" }}</h5>
+                        <p class="mb-0 small">
+                            بواسطة: {{ report.created_by.get_full_name|default:report.created_by.username }} في {{ report.created_at|date:"Y-m-d H:i" }}
+                        </p>
+                    </div>
+                </div>
+                <div class="row g-4 mb-5">
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">السبب الرئيسي</label>
+                        <div class="fw-bold text-dark fs-5">{{ report.reason }}</div>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">ملاحظات</label>
+                        <div class="text-dark">{{ report.notes|default:"لا توجد ملاحظات إضافية" }}</div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-3">#</th>
+                                <th>الكتاب</th>
+                                <th class="text-center">الكمية التالفة</th>
+                                <th class="text-end">تكلفة الوحدة</th>
+                                <th class="text-end pe-3">إجمالي الخسارة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in report.items.all %}
+                                <tr>
+                                    <td class="ps-3">{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ item.product.name }}</div>
+                                        <div class="small text-muted">ID: {{ item.product.product_id }}</div>
+                                    </td>
+                                    <td class="text-center fw-bold">{{ item.quantity|floatformat:0 }}</td>
+                                    <td class="text-end">{{ item.unit_cost|intcomma }} SAR</td>
+                                    <td class="text-end pe-3 fw-bold">{{ item.subtotal|intcomma }} SAR</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-light fw-bold">
+                            <tr>
+                                <td colspan="4" class="text-end ps-3">إجمالي قيمة الخسارة المادية:</td>
+                                <td class="text-end pe-3 text-danger fs-5">{{ report.total_loss|intcomma }} SAR</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% if report.approved_by %}
+                    <div class="mt-5 pt-4 border-top text-center text-muted small">
+                        تم الاعتماد بواسطة: <span class="fw-bold">{{ report.approved_by.username }}</span> في {{ report.approved_at|date:"Y-m-d H:i" }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

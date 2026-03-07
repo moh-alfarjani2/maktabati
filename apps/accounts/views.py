@@ -16,7 +16,20 @@ class UserListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return super().get_queryset().select_related('role').order_by('-date_joined')
+        queryset = super().get_queryset().select_related('role')
+        sort = self.request.GET.get('sort')
+        direction = self.request.GET.get('dir', 'desc')
+
+        if sort:
+            valid_sorts = ['username', 'first_name', 'email', 'role__name', 'is_active', 'date_joined']
+            if sort in valid_sorts:
+                if direction == 'desc':
+                    sort = f"-{sort}"
+                queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('-date_joined')
+
+        return queryset
 
 @method_decorator(role_required(allowed_roles=['admin']), name='dispatch')
 class UserCreateView(LoginRequiredMixin, CreateView):

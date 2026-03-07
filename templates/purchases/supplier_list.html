@@ -10,14 +10,15 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 table-sortable"
+                       id="suppliers_table">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4">اسم المورد</th>
-                            <th>الشخص المسؤول</th>
-                            <th>رقم الجوال</th>
-                            <th>البريد الإلكتروني</th>
-                            <th class="text-center">الإجراءات</th>
+                            <th class="ps-4" data-sort-field="name">اسم المورد</th>
+                            <th data-sort-field="contact_person">الشخص المسؤول</th>
+                            <th data-sort-field="phone">رقم الجوال</th>
+                            <th data-sort-field="email">البريد الإلكتروني</th>
+                            <th class="text-center no-sort">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from django.conf import settings
+from apps.books.models import Product
 from apps.core.models import SystemSequence
 
 def generate_loss_id():
@@ -44,6 +45,10 @@ class DamageReport(models.Model):
         verbose_name = "تقرير تالف"
         verbose_name_plural = "تقارير التالف"
         ordering = ['-damage_date']
+
+    @property
+    def is_approved(self):
+        return self.status == 'approved'
 
     def __str__(self):
         return f"تقرير تالف {self.loss_id}"
@@ -110,6 +115,10 @@ class DamageItem(models.Model):
     class Meta:
         verbose_name = "بند تلف"
         verbose_name_plural = "بنود التلف"
+
+    @property
+    def subtotal(self):
+        return self.total_loss
 
     def __str__(self):
         return f"{self.product.name} × {self.quantity}"

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize core_tags %}
 {% block title %}سجل المبيعات - POS الاحترافي{% endblock %}
 {% block extra_css %}
     <style>
@@ -47,17 +47,18 @@
         <!-- Table -->
         <div class="card shadow-sm border-0 overflow-hidden">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 table-sortable"
+                       id="sales_table">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th class="ps-4">رقم الفاتورة</th>
-                            <th>التاريخ والوقت</th>
-                            <th>العميل</th>
-                            <th>الكاشير</th>
-                            <th>طريقة الدفع</th>
-                            <th>الإجمالي</th>
-                            <th>الحالة</th>
-                            <th class="pe-4 text-end">الإجراءات</th>
+                            <th class="ps-4" data-sort-field="invoice_id">رقم الفاتورة</th>
+                            <th data-sort-field="created_at">التاريخ والوقت</th>
+                            <th data-sort-field="customer__name">العميل</th>
+                            <th class="no-sort">الكاشير</th>
+                            <th data-sort-field="payment_method">طريقة الدفع</th>
+                            <th data-sort-field="total_amount">الإجمالي</th>
+                            <th data-sort-field="status">الحالة</th>
+                            <th class="pe-4 text-end no-sort">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -134,7 +135,7 @@
                     {% if page_obj.has_previous %}
                         <li class="page-item">
                             <a class="page-link shadow-sm border-0"
-                               href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                               href="{% url_replace page=page_obj.previous_page_number %}">السابق</a>
                         </li>
                     {% endif %}
                     <li class="page-item active">
@@ -143,7 +144,7 @@
                     {% if page_obj.has_next %}
                         <li class="page-item">
                             <a class="page-link shadow-sm border-0"
-                               href="?page={{ page_obj.next_page_number }}">التالي</a>
+                               href="{% url_replace page=page_obj.next_page_number %}">التالي</a>
                         </li>
                     {% endif %}
                 </ul>

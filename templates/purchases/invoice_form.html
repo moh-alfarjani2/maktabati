@@ -10,24 +10,34 @@
 {% block extra_css %}
     <style>
     .invoice-title { font-weight: 800; color: #1e293b; margin-bottom: 1.5rem; }
-    .item-row { transition: all 0.2s ease; border-bottom: 1px solid #f1f5f9; }
+    .item-row { transition: all 0.2s ease; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
     .item-row:hover { background-color: #f8fafc; }
     .total-card { border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
     .form-label-bold { font-weight: 700; color: #475569; font-size: 0.85rem; }
-    .product-select { min-width: 250px; }
+    .product-select { min-width: 200px; }
     .animate-in { animation: slideDown 0.2s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     .table-invoice-thead { background: #f8fafc; font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
-    .col-product { width: 40%; }
-    .col-qty { width: 15%; }
-    .col-price { width: 15%; }
-    .col-subtotal { width: 20%; }
-    .col-action { width: 5%; }
+    
+    .pkg-toggle { cursor: pointer; user-select: none; }
+    .pkg-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
+    .calc-hint { font-size: 0.7rem; color: #64748b; font-weight: normal; margin-top: 2px; display: block; }
+    .profit-badge { font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+    .input-group-sm > .form-control { font-size: 0.85rem; }
+    
+    .col-product { width: 25%; }
+    .col-pkg { width: 8%; text-align: center; }
+    .col-qty { width: 14%; }
+    .col-price { width: 18%; }
+    .col-sell { width: 18%; }
+    .col-tax { width: 7%; }
+    .col-subtotal { width: 15%; text-align: end; }
+    .col-action { width: 5%; text-align: end; }
     </style>
 {% endblock %}
 {% block content %}
     <div class="row justify-content-center pt-2">
-        <div class="col-lg-11 col-xl-10">
+        <div class="col-lg-12">
             <form method="post" id="invoiceForm">
                 {% csrf_token %}
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -39,17 +49,16 @@
                                 إنشاء فاتورة توريد جديدة
                             {% endif %}
                         </h3>
-                        <p class="text-muted small">قم بإضافة العناصر المستلمة من المورد لتحديث المخزون آلياً.</p>
+                        <p class="text-muted small">قم بإضافة الأصناف (بالقطعة أو بالعبوة) لتحديث المخزون والأسعار آلياً.</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{% url 'invoice_list' %}" class="btn btn-light px-4">إلغاء</a>
+                        <a href="{% url 'invoice_purchase_list' %}" class="btn btn-light px-4">إلغاء</a>
                         <button type="submit" class="btn btn-primary px-5 shadow-sm">
-                            <i class="fas fa-save me-1"></i> حفظ الفاتورة (مسودة)
+                            <i class="fas fa-save me-1"></i> حفظ الفاتورة
                         </button>
                     </div>
                 </div>
                 <div class="row g-4">
-                    <!-- Main Form Body -->
                     <div class="col-lg-12">
                         <div class="card shadow-sm border-0 mb-4 p-4">
                             <div class="row g-3">
@@ -69,7 +78,8 @@
                                     <label class="form-label-bold">التاريخ</label>
                                     <input type="date"
                                            name="invoice_date"
-                                           class="form-select"
+                                           class="form-control"
+                                           id="invoiceDateInput"
                                            value="{{ form.invoice_date.value|date:'Y-m-d'|default:'' }}"
                                            required>
                                 </div>
@@ -96,7 +106,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Dynamic Items Table -->
                         <div class="card shadow-sm border-0 mb-4 overflow-hidden">
                             <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0 text-dark">
@@ -105,16 +114,19 @@
                                 <button type="button"
                                         class="btn btn-outline-primary btn-sm rounded-pill"
                                         onclick="addRow()">
-                                    <i class="fas fa-plus me-1"></i> إضافة منتج
+                                    <i class="fas fa-plus me-1"></i> إضافة صنف
                                 </button>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" id="itemsTable">
+                                <table class="table table-hover align-top mb-0" id="itemsTable">
                                     <thead class="table-invoice-thead">
                                         <tr>
                                             <th class="ps-4 col-product">المنتج</th>
+                                            <th class="col-pkg">عبوة؟</th>
                                             <th class="col-qty">الكمية</th>
                                             <th class="col-price">سعر الشراء</th>
+                                            <th class="col-sell">سعر البيع</th>
+                                            <th class="col-tax">ضريبة %</th>
                                             <th class="col-subtotal">الإجمالي الفرعي</th>
                                             <th class="col-action"></th>
                                         </tr>
@@ -122,64 +134,23 @@
                                     <tbody>
                                         {% if object %}
                                             {% for item in object.items.all %}
-                                                <tr class="item-row">
-                                                    <td class="ps-4">
-                                                        <select name="product[]"
-                                                                class="form-select product-select"
-                                                                required
-                                                                onchange="updatePrice(this); calculateRow(this)">
-                                                            {% for p in products %}
-                                                                <option value="{{ p.id }}"
-                                                                        data-price="{{ p.purchase_price }}"
-                                                                        {% if item.product_id == p.id %}selected{% endif %}>
-                                                                    {{ p.name }} ({{ p.product_id }})
-                                                                </option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="number"
-                                                               step="0.01"
-                                                               name="quantity[]"
-                                                               class="form-control qty-input"
-                                                               value="{{ item.quantity|stringformat:'g' }}"
-                                                               oninput="calculateRow(this)">
-                                                    </td>
-                                                    <td>
-                                                        <input type="number"
-                                                               step="0.01"
-                                                               name="price[]"
-                                                               class="form-control price-input"
-                                                               value="{{ item.unit_price|stringformat:'g' }}"
-                                                               oninput="calculateRow(this)">
-                                                    </td>
-                                                    <td class="fw-bold text-dark subtotal-txt">0.00 SAR</td>
-                                                    <td class="pe-4 text-end">
-                                                        <button type="button"
-                                                                class="btn btn-sm text-danger border-0"
-                                                                onclick="removeRow(this)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                {% include 'purchases/partials/invoice_row.html' with item=item %}
                                             {% endfor %}
                                         {% endif %}
                                     </tbody>
                                 </table>
                             </div>
-                            <!-- Empty State Wrapper -->
                             <div id="empty-msg"
                                  class="text-center py-5 text-muted {% if object and object.items.exists %}d-none{% endif %}">
-                                <i class="fas fa-cart-plus fa-3x opacity-25 mb-3"></i>
-                                <p>لا توجد عناصر في الفاتورة بعد. ابدأ بإضافة المنتجات.</p>
+                                <i class="fas fa-box-open fa-3x opacity-25 mb-3"></i>
+                                <p>لا توجد أصناف في الفاتورة. انقر على "إضافة صنف" للبدء.</p>
                             </div>
-                            <!-- Summary Section -->
                             <div class="card-footer bg-white py-4 border-top">
                                 <div class="row justify-content-end">
                                     <div class="col-lg-4">
                                         <div class="total-card p-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="text-muted">إجمالي الأصناف (Quantity):</span>
+                                                <span class="text-muted">إجمالي القطع:</span>
                                                 <span class="fw-bold" id="total-qty">0</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center pt-2 border-top">
@@ -196,44 +167,133 @@
             </form>
         </div>
     </div>
-    <!-- Template for new rows -->
+    <!-- Row Template -->
     <template id="row-template">
         <tr class="item-row animate-in">
             <td class="ps-4">
                 <select name="product[]"
                         class="form-select product-select"
                         required
-                        onchange="updatePrice(this); calculateRow(this);">
+                        onchange="updatePrice(this)">
                     <option value="">اختر المنتج...</option>
                     {% for p in products %}
-                        <option value="{{ p.id }}" data-price="{{ p.purchase_price }}">{{ p.name }} ({{ p.product_id }})</option>
+                        <option value="{{ p.id }}"
+                                data-buy="{{ p.purchase_price|stringformat:'g' }}"
+                                data-sell="{{ p.selling_price|stringformat:'g' }}"
+                                data-pkg-buy="{{ p.package_purchase_price|stringformat:'g' }}"
+                                data-pkg-sell="{{ p.package_selling_price|stringformat:'g' }}"
+                                data-pkg-qty="{{ p.package_qty|stringformat:'g' }}"
+                                data-tax="{{ p.tax_rate|stringformat:'g' }}">{{ p.name }} ({{ p.product_id }})</option>
                     {% endfor %}
                 </select>
+                <div class="mt-1">
+                    <span class="badge bg-light text-dark border pkg-info-badge d-none small"></span>
+                </div>
+            </td>
+            <td class="text-center">
+                <div class="form-check form-switch d-inline-block mt-2">
+                    <input class="form-check-input pkg-switch"
+                           type="checkbox"
+                           onchange="togglePkg(this)">
+                    <input type="hidden" name="is_package[]" value="false" class="pkg-hidden">
+                </div>
+            </td>
+            <td>
+                <!-- Package Logic Inputs -->
+                <div class="pkg-inputs d-none">
+                    <div class="input-group input-group-sm mb-1">
+                        <span class="input-group-text">عدد</span>
+                        <input type="number"
+                               step="0.001"
+                               name="package_qty[]"
+                               class="form-control pkg-qty-input"
+                               value="1"
+                               oninput="calculateRow(this)">
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">سعة</span>
+                        <input type="number"
+                               step="0.001"
+                               name="pcs_per_pkg[]"
+                               class="form-control pcs-pkg-input"
+                               value="1"
+                               oninput="calculateRow(this)">
+                    </div>
+                    <small class="calc-hint total-pcs-hint">المجموع: 0 قطعة</small>
+                </div>
+                <!-- Piece Logic Input -->
+                <div class="pcs-inputs">
+                    <input type="number"
+                           step="0.001"
+                           name="quantity[]"
+                           class="form-control form-control-sm pcs-qty-input"
+                           value="1"
+                           oninput="calculateRow(this)">
+                    <small class="calc-hint">بيع بالقطعة</small>
+                </div>
+            </td>
+            <td>
+                <div class="pkg-inputs d-none">
+                    <input type="number"
+                           step="0.01"
+                           name="package_price[]"
+                           class="form-control form-control-sm pkg-buy-input"
+                           value="0.00"
+                           oninput="calculateRow(this)">
+                    <small class="calc-hint unit-buy-hint">للقطعة: 0.00</small>
+                </div>
+                <div class="pcs-inputs">
+                    <input type="number"
+                           step="0.01"
+                           name="price[]"
+                           class="form-control form-control-sm unit-buy-input_field"
+                           value="0.00"
+                           oninput="calculateRow(this)">
+                </div>
+            </td>
+            <td>
+                <div class="pkg-inputs d-none">
+                    <input type="number"
+                           step="0.01"
+                           name="package_sell_price[]"
+                           class="form-control form-control-sm pkg-sell-input"
+                           value="0.00"
+                           oninput="calculateRow(this)">
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="calc-hint unit-sell-hint">للقطعة: 0.00</small>
+                        <span class="profit-badge bg-success-subtle text-success pkg-profit">0%</span>
+                    </div>
+                </div>
+                <div class="pcs-inputs">
+                    <input type="number"
+                           step="0.01"
+                           name="sell_price[]"
+                           class="form-control form-control-sm unit-sell-input_field"
+                           value="0.00"
+                           oninput="calculateRow(this)">
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="calc-hint">سعر البيع</small>
+                        <span class="profit-badge bg-primary-subtle text-primary pcs-profit">0%</span>
+                    </div>
+                </div>
             </td>
             <td>
                 <input type="number"
                        step="0.01"
-                       name="quantity[]"
-                       class="form-control qty-input"
-                       value="1"
-                       required
+                       name="tax[]"
+                       class="form-control form-control-sm tax-input"
+                       value="0"
                        oninput="calculateRow(this)">
             </td>
-            <td>
-                <input type="number"
-                       step="0.01"
-                       name="price[]"
-                       class="form-control price-input"
-                       value="0.00"
-                       required
-                       oninput="calculateRow(this)">
+            <td class="col-subtotal fw-bold text-dark pt-3">
+                <span class="subtotal-txt">0.00</span>
+                <small class="d-block text-muted" style="font-size:0.6rem;">ريال سعودي</small>
             </td>
-            <td class="fw-bold text-dark subtotal-txt">0.00 SAR</td>
-            <td class="pe-4 text-end">
+            <td class="col-action pt-2">
                 <button type="button"
-                        class="btn btn-sm text-danger border-0"
+                        class="btn btn-link text-danger p-0 border-0"
                         onclick="removeRow(this)">
-                    <i class="fas fa-trash"></i>
+                    <i class="fas fa-times-circle fa-lg"></i>
                 </button>
             </td>
         </tr>
@@ -241,63 +301,142 @@
 {% endblock %}
 {% block extra_js %}
     <script>
+    {% if not object %}document.getElementById('invoiceDateInput').valueAsDate = new Date();{% endif %}
+
     function addRow() {
         $('#empty-msg').addClass('d-none');
         const template = document.querySelector('#row-template').content.cloneNode(true);
-        document.querySelector('#itemsTable tbody').appendChild(template);
-        calculateTotal();
+        const tbody = document.querySelector('#itemsTable tbody');
+        tbody.appendChild(template);
+        const newRow = $(tbody).find('tr:last');
+        calculateRow(newRow.find('.product-select')[0]);
     }
 
     function removeRow(btn) {
         $(btn).closest('tr').remove();
-        if ($('#itemsTable tbody tr').length === 0) {
-            $('#empty-msg').removeClass('d-none');
-        }
+        if ($('#itemsTable tbody tr').length === 0) $('#empty-msg').removeClass('d-none');
         calculateTotal();
     }
 
+    function togglePkg(checkbox) {
+        const row = $(checkbox).closest('tr');
+        const isPkg = checkbox.checked;
+        row.find('.pkg-hidden').val(isPkg);
+        
+        if (isPkg) {
+            row.find('.pkg-inputs').removeClass('d-none');
+            row.find('.pcs-inputs').addClass('d-none');
+        } else {
+            row.find('.pkg-inputs').addClass('d-none');
+            row.find('.pcs-inputs').removeClass('d-none');
+        }
+        calculateRow(checkbox);
+    }
+
     function updatePrice(select) {
-        const price = $(select).find(':selected').data('price') || 0;
-        $(select).closest('tr').find('.price-input').val(price);
+        const row = $(select).closest('tr');
+        const opt = $(select).find(':selected');
+        
+        if (!opt.val()) return;
+
+        const buy = parseFloat(opt.data('buy')) || 0;
+        const sell = parseFloat(opt.data('sell')) || 0;
+        const pkgBuy = parseFloat(opt.data('pkg-buy')) || 0;
+        const pkgSell = parseFloat(opt.data('pkg-sell')) || 0;
+        const pkgQty = parseFloat(opt.data('pkg-qty')) || 1;
+        const tax = parseFloat(opt.data('tax')) || 0;
+
+        // Fill Piece fields
+        row.find('.unit-buy-input_field').val(buy);
+        row.find('.unit-sell-input_field').val(sell);
+        
+        // Fill Package fields
+        row.find('.pkg-buy-input').val(pkgBuy);
+        row.find('.pkg-sell-input').val(pkgSell);
+        row.find('.pcs-pkg-input').val(pkgQty);
+        
+        // Fill Tax
+        row.find('.tax-input').val(tax);
+        
+        calculateRow(select);
     }
 
     function calculateRow(el) {
         const row = $(el).closest('tr');
-        const qty = parseFloat(row.find('.qty-input').val()) || 0;
-        const price = parseFloat(row.find('.price-input').val()) || 0;
-        const subtotal = qty * price;
-        row.find('.subtotal-txt').text(subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' SAR');
+        const isPkg = row.find('.pkg-switch').is(':checked');
+        
+        let qty = 0;
+        let buyPrice = 0;
+        let sellPrice = 0;
+        let rowSubtotal = 0;
+        const taxPercent = parseFloat(row.find('.tax-input').val()) || 0;
+
+        if (isPkg) {
+            const pkgQty = parseFloat(row.find('.pkg-qty-input').val()) || 0;
+            const pcsPerPkg = parseFloat(row.find('.pcs-pkg-input').val()) || 1;
+            const pkgPrice = parseFloat(row.find('.pkg-buy-input').val()) || 0;
+            const pkgSell = parseFloat(row.find('.pkg-sell-input').val()) || 0;
+
+            qty = pkgQty * pcsPerPkg;
+            buyPrice = pkgPrice / (pcsPerPkg || 1);
+            sellPrice = pkgSell / (pcsPerPkg || 1);
+
+            row.find('.total-pcs-hint').text(`المجموع: ${qty.toFixed(2)} قطعة`);
+            row.find('.unit-buy-hint').text(`للقطعة: ${buyPrice.toFixed(2)}`);
+            row.find('.unit-sell-hint').text(`للقطعة: ${sellPrice.toFixed(2)}`);
+            
+            // Profit margin for pkg
+            const pkgProfit = pkgPrice > 0 ? ((pkgSell - pkgPrice) / pkgPrice * 100) : 0;
+            row.find('.pkg-profit').text(`${pkgProfit.toFixed(1)}%`);
+            
+            // Sync hidden inputs for backend
+            row.find('.pcs-qty-input').val(qty);
+            row.find('.unit-buy-input_field').val(buyPrice.toFixed(2));
+            row.find('.unit-sell-input_field').val(sellPrice.toFixed(2));
+            
+            rowSubtotal = pkgQty * pkgPrice;
+        } else {
+            qty = parseFloat(row.find('.pcs-qty-input').val()) || 0;
+            buyPrice = parseFloat(row.find('.unit-buy-input_field').val()) || 0;
+            sellPrice = parseFloat(row.find('.unit-sell-input_field').val()) || 0;
+            
+            const pcsProfit = buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice * 100) : 0;
+            row.find('.pcs-profit').text(`${pcsProfit.toFixed(1)}%`);
+            
+            rowSubtotal = qty * buyPrice;
+        }
+
+        // Apply Tax
+        const subtotalWithTax = rowSubtotal + (rowSubtotal * taxPercent / 100);
+        row.find('.subtotal-txt').text(subtotalWithTax.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        
         calculateTotal();
     }
 
     function calculateTotal() {
         let grandTotal = 0;
-        let totalQty = 0;
+        let totalPieces = 0;
         $('.item-row').each(function() {
-            const qty = parseFloat($(this).find('.qty-input').val()) || 0;
-            const price = parseFloat($(this).find('.price-input').val()) || 0;
-            grandTotal += (qty * price);
-            totalQty += qty;
+            const row = $(this);
+            const subtotalText = row.find('.subtotal-txt').text().replace(/,/g, '');
+            grandTotal += parseFloat(subtotalText) || 0;
+            
+            // Always count units (pieces) for the summary, regardless of mode input
+            const pieces = parseFloat(row.find('.pcs-qty-input').val()) || 0;
+            totalPieces += pieces;
         });
         $('#grand-total').text(grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' SAR');
-        $('#total-qty').text(totalQty.toLocaleString());
+        $('#total-qty').text(totalPieces.toLocaleString());
     }
 
-    $('#invoiceForm').on('submit', function(e) {
-        if ($('.product-select').filter((_, el) => $(el).val() !== "").length === 0) {
-            e.preventDefault();
-            Swal.fire('خطأ', 'يجب إضافة منتج واحد على الأقل للفاتورة', 'error');
-        }
-    });
-
     $(document).ready(function() {
-        if ($('#itemsTable tbody tr').length === 0 && !"{% if object %}true{% endif %}") {
+        if ($('#itemsTable tbody tr').length === 0) {
             addRow();
         } else {
-            $('.item-row').each(function() { calculateRow(this); });
+            $('.item-row').each(function() {
+                calculateRow($(this).find('.product-select')[0]);
+            });
         }
     });
-
-    // Confirmation if status is not Draft
     </script>
 {% endblock %}

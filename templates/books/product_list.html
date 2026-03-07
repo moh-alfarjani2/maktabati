@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize core_tags %}
 {% block title %}إدارة المنتجات - نظام POS الاحترافي{% endblock %}
 {% block extra_css %}
     <style>
@@ -160,17 +160,18 @@
         <!-- Product Table -->
         <div class="card shadow-sm border-0 overflow-hidden">
             <div class="table-responsive">
-                <table class="table table-hover table-vcenter mb-0">
+                <table class="table table-hover table-vcenter mb-0 table-sortable"
+                       id="products_table">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th class="ps-4" style="width: 60px">#</th>
-                            <th>المنتج</th>
-                            <th>ID / الباركود</th>
-                            <th>التصنيف</th>
-                            <th>سعر البيع</th>
-                            <th>المخزون الحالي</th>
-                            <th>الحالة</th>
-                            <th class="text-end pe-4">الإجراءات</th>
+                            <th class="ps-4" style="width: 60px" data-sort-field="created_at">#</th>
+                            <th data-sort-field="name">المنتج</th>
+                            <th data-sort-field="code">ID / الباركود</th>
+                            <th class="no-sort">التصنيف</th>
+                            <th data-sort-field="selling_price">سعر البيع</th>
+                            <th data-sort-field="current_stock">المخزون الحالي</th>
+                            <th class="no-sort">الحالة</th>
+                            <th class="text-end pe-4 no-sort">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -286,7 +287,8 @@
                         <ul class="pagination pagination-sm justify-content-center mb-0">
                             {% if page_obj.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-right"></i></a>
+                                    <a class="page-link"
+                                       href="{% url_replace page=page_obj.previous_page_number %}"><i class="fas fa-chevron-right"></i></a>
                                 </li>
                             {% endif %}
                             {% for num in page_obj.paginator.page_range %}
@@ -296,13 +298,14 @@
                                     </li>
                                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        <a class="page-link" href="{% url_replace page=num %}">{{ num }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
                             {% if page_obj.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-left"></i></a>
+                                    <a class="page-link"
+                                       href="{% url_replace page=page_obj.next_page_number %}"><i class="fas fa-chevron-left"></i></a>
                                 </li>
                             {% endif %}
                         </ul>

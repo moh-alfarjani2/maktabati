@@ -8,14 +8,17 @@
               content="نظام إدارة المكتبة الاحترافي - تسجيل الدخول">
         <meta name="keywords" content="مكتبة, إدارة, مبيعات, مشتريات, مخزون">
         <title>تسجيل الدخول - نظام إدارة المكتبة</title>
-        <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap"
-              rel="stylesheet">
-        <!-- Bootstrap 5 CSS RTL -->
-        <link rel="stylesheet"
-              href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-        <!-- Custom CSS -->
-        <style>
+        <!-- Favicon -->
+        <link rel="icon"
+              href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+            <!-- Google Fonts -->
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap"
+                  rel="stylesheet">
+            <!-- Bootstrap 5 CSS RTL -->
+            <link rel="stylesheet"
+                  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+            <!-- Custom CSS -->
+            <style>
         body {
             font-family: 'Noto Sans Arabic', sans-serif;
             background: linear-gradient(135deg, #4f46e5 0%, #1a1d2e 100%);
@@ -78,59 +81,59 @@
             margin: 0 auto 20px;
             font-size: 24px;
         }
-        </style>
-        <!-- Font Awesome -->
-        <link rel="stylesheet"
-              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    </head>
-    <body>
-        <div class="login-card">
-            <div class="login-header">
-                <div class="icon-box">
-                    <i class="fas fa-book-open"></i>
+            </style>
+            <!-- Font Awesome -->
+            <link rel="stylesheet"
+                  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+        </head>
+        <body>
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="icon-box">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h2>تسجيل الدخول</h2>
+                    <p>مرحباً بك في نظام إدارة المكتبة</p>
                 </div>
-                <h2>تسجيل الدخول</h2>
-                <p>مرحباً بك في نظام إدارة المكتبة</p>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}<div class="alert alert-danger py-2 small">اسم المستخدم أو كلمة المرور غير صحيحة.</div>{% endif %}
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-user"></i></span>
+                            <input type="text"
+                                   name="username"
+                                   class="form-control border-start-0"
+                                   required
+                                   placeholder="أدخل اسم المستخدم">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">كلمة المرور</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock"></i></span>
+                            <input type="password"
+                                   id="password"
+                                   name="password"
+                                   class="form-control border-start-0 border-end-0"
+                                   required
+                                   placeholder="أدخل كلمة المرور">
+                            <button type="button"
+                                    class="btn btn-light border border-start-0"
+                                    id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">دخول النظام</button>
+                    <div class="text-center">
+                        <small class="text-muted">نسيت كلمة المرور؟ التواصل مع المدير.</small>
+                    </div>
+                </form>
             </div>
-            <form method="post">
-                {% csrf_token %}
-                {% if form.errors %}<div class="alert alert-danger py-2 small">اسم المستخدم أو كلمة المرور غير صحيحة.</div>{% endif %}
-                <div class="mb-3">
-                    <label class="form-label">اسم المستخدم</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-user"></i></span>
-                        <input type="text"
-                               name="username"
-                               class="form-control border-start-0"
-                               required
-                               placeholder="أدخل اسم المستخدم">
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label">كلمة المرور</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock"></i></span>
-                        <input type="password"
-                               id="password"
-                               name="password"
-                               class="form-control border-start-0 border-end-0"
-                               required
-                               placeholder="أدخل كلمة المرور">
-                        <button type="button"
-                                class="btn btn-light border border-start-0"
-                                id="togglePassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">دخول النظام</button>
-                <div class="text-center">
-                    <small class="text-muted">نسيت كلمة المرور؟ التواصل مع المدير.</small>
-                </div>
-            </form>
-        </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+            <script>
         const togglePassword = document.querySelector('#togglePassword');
         const password = document.querySelector('#password');
 
@@ -142,6 +145,6 @@
             this.querySelector('i').classList.toggle('fa-eye');
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
-        </script>
-    </body>
-</html>
+            </script>
+        </body>
+    </html>

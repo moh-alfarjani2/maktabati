@@ -104,7 +104,8 @@ class SaleInvoice(models.Model):
             for item in self.items.all()
         )
         self.cost_amount = total_cost
-        self.profit_amount = self.total_amount - total_cost
+        # Profit = revenue after discount (subtotal) minus cost. Does NOT include tax.
+        self.profit_amount = self.subtotal - self.discount_amount - total_cost
         return self.profit_amount
 
 

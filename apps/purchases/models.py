@@ -57,7 +57,7 @@ class PurchaseInvoice(models.Model):
         max_length=20, choices=PAYMENT_CHOICES, default='cash', verbose_name="طريقة الدفع"
     )
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="الحالة"
+        max_length=20, choices=STATUS_CHOICES, default='approved', verbose_name="الحالة"
     )
 
     # المبالغ
@@ -110,28 +110,26 @@ class PurchaseInvoice(models.Model):
 
     @transaction.atomic
     def approve(self, user):
-        """اعتماد الفاتورة: زيادة المخزون + تحديث متوسط التكلفة مع ميزة القفل (Locking) لمنع سباق البيانات"""
-        # قفل سجل الفاتورة لمنع الاعتماد المزدوج
+        """اعتماد الفاتورة: زيادة المخزون + تحديث متوسط التكلفة مع ميزة القفل (Locking)"""
+        # قفل سجل الفاتورة
         invoice = PurchaseInvoice.objects.select_for_update().get(pk=self.pk)
-        if invoice.status != 'draft':
-            raise ValueError("يمكن اعتماد المسودات فقط")
+        
+        # إذا تم الغاؤها مسبقاً، لا يمكن اعتمادها
+        if invoice.status == 'cancelled':
+            raise ValueError("لا يمكن اعتماد فاتورة ملغاة")
 
         from apps.inventory.models import InventoryMovement
         from apps.books.models import Product
 
         for item in self.items.all():
-            # قفل السجل في قاعدة البيانات لمنع أي عملية بيع متزامنة من تغيير المخزون في نفس اللحظة
             product = Product.objects.select_for_update().get(id=item.product_id)
             
-            # تحديث متوسط التكلفة (Weighted Average)
+            # تحديث متوسط التكلفة
             product.update_avg_cost(item.quantity, item.unit_price)
-            # تحديث آخر سعر شراء
             product.last_purchase_price = item.unit_price
-            # زيادة المخزون
             product.current_stock += item.quantity
             product.save()
 
-            # تسجيل حركة مخزنية
             InventoryMovement.objects.create(
                 product=product,
                 movement_type='purchase',
@@ -151,6 +149,41 @@ class PurchaseInvoice(models.Model):
         self.approved_by = user
         self.approved_at = timezone.now()
         self.save()
+
+    @transaction.atomic
+    def revert_stock(self, user):
+        """عكس الحركات المخزنية والمالية للفاتورة قبل التعديل أو عند الإلغاء"""
+        invoice = PurchaseInvoice.objects.select_for_update().get(pk=self.pk)
+        if invoice.status != 'approved':
+            return # لا حاجة للعكس إذا لم يتم الاعتماد
+
+        from apps.inventory.models import InventoryMovement
+        from apps.books.models import Product
+
+        for item in self.items.all():
+            product = Product.objects.select_for_update().get(id=item.product_id)
+            # عكس المخزون
+            product.current_stock -= item.quantity
+            if product.current_stock < 0:
+                product.current_stock = 0
+            product.save()
+
+            InventoryMovement.objects.create(
+                product=product,
+                movement_type='adjustment',
+                quantity_change=-float(item.quantity),
+                quantity_after=float(product.current_stock),
+                reference=f"تعديل/عكس فاتورة {self.invoice_id}",
+                user=user
+            )
+
+        # عكس الديون إذا كانت آجل
+        if self.payment_method == 'credit':
+            self.supplier.balance_due -= self.amount_due
+            self.supplier.save()
+        
+        # إعادة الحالة للمسودة مؤقتاً أثناء التعديل أو الاحتفاظ بها كمعتمدة حسب الحاجة
+        # هنا سنتركها "مرجوعة" مخزنياً حتى يتم استدعاء approve مجدداً
 
     @transaction.atomic
     def cancel(self, user):
@@ -196,20 +229,29 @@ class PurchaseInvoiceItem(models.Model):
     product = models.ForeignKey(
         'books.Product', on_delete=models.PROTECT, verbose_name="المنتج"
     )
-    unit_name = models.CharField(max_length=50, default="قطعة", verbose_name="الوحدة")
-    unit_factor = models.DecimalField(
-        max_digits=10, decimal_places=3, default=1,
-        verbose_name="معامل التحويل"
+    is_package = models.BooleanField(default=False, verbose_name="شراء بالعبوة")
+    package_qty = models.DecimalField(
+        max_digits=12, decimal_places=3, default=0, verbose_name="عدد العبوات"
     )
+    pieces_per_package = models.DecimalField(
+        max_digits=12, decimal_places=3, default=1, verbose_name="قطع/عبوة"
+    )
+    package_purchase_price = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, verbose_name="سعر شراء العبوة"
+    )
+    package_selling_price = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, verbose_name="سعر بيع العبوة"
+    )
+    
     quantity = models.DecimalField(
-        max_digits=12, decimal_places=3, verbose_name="الكمية"
+        max_digits=12, decimal_places=3, verbose_name="الكمية (بالقطع)"
     )
     unit_price = models.DecimalField(
-        max_digits=12, decimal_places=2, verbose_name="سعر الشراء"
+        max_digits=12, decimal_places=2, verbose_name="سعر شراء القطعة"
     )
     suggested_selling_price = models.DecimalField(
         max_digits=12, decimal_places=2, default=0,
-        verbose_name="سعر البيع المقترح"
+        verbose_name="سعر بيع القطعة"
     )
     discount = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, verbose_name="الخصم"
@@ -230,6 +272,19 @@ class PurchaseInvoiceItem(models.Model):
 
     def save(self, *args, **kwargs):
         from decimal import Decimal
+        
+        # إذا كان شراء بالعبوة، احسب الكمية الإجمالية وسعر القطعة
+        if self.is_package:
+            # الكمية الإجمالية = عدد العبوات × قطع/عبوة
+            self.quantity = self.package_qty * self.pieces_per_package
+            # سعر القطعة = سعر العبوة / قطع/عبوة
+            if self.pieces_per_package > 0:
+                self.unit_price = self.package_purchase_price / self.pieces_per_package
+                self.suggested_selling_price = self.package_selling_price / self.pieces_per_package
+            else:
+                self.unit_price = self.package_purchase_price
+                self.suggested_selling_price = self.package_selling_price
+
         subtotal = (self.unit_price * self.quantity) - self.discount
         tax_val = subtotal * (self.tax / Decimal('100'))
         self.total_price = subtotal + tax_val

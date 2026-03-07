@@ -34,15 +34,16 @@
         </div>
         <div class="card shadow-sm border-0 overflow-hidden">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 table-sortable"
+                       id="customers_table">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th class="ps-4">اسم العميل</th>
-                            <th>رقم الجوال</th>
-                            <th>البريد الإلكتروني</th>
-                            <th>الرصيد المستحق</th>
-                            <th>تاريخ التسجيل</th>
-                            <th class="pe-4 text-end">الإجراءات</th>
+                            <th class="ps-4" data-sort-field="name">اسم العميل</th>
+                            <th data-sort-field="phone">رقم الجوال</th>
+                            <th data-sort-field="email">البريد الإلكتروني</th>
+                            <th data-sort-field="balance_due">الرصيد المستحق</th>
+                            <th data-sort-field="created_at">تاريخ التسجيل</th>
+                            <th class="pe-4 text-end no-sort">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">

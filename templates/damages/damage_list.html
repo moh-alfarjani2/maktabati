@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}قائمة التوالف{% endblock %}
+{% block content %}
+    <div class="container py-4 fade-in">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">تقارير التوالف</h2>
+                <p class="text-muted small mb-0">إدارة وتسجيل الكتب التالفة أو المفقودة</p>
+            </div>
+            <a href="{% url 'damages:create' %}"
+               class="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm">
+                <i class="fas fa-plus-circle"></i>
+                <span>إضافة تقرير تالف</span>
+            </a>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small fw-bold text-uppercase">
+                        <tr>
+                            <th class="ps-4">رقم التقرير</th>
+                            <th>التاريخ</th>
+                            <th>السبب الرئيسي</th>
+                            <th>الحالة</th>
+                            <th class="text-center">بواسطة</th>
+                            <th class="text-end pe-4">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-dark">#{{ report.loss_id }}</span>
+                                </td>
+                                <td>{{ report.damage_date|date:"Y-m-d" }}</td>
+                                <td>{{ report.reason }}</td>
+                                <td>
+                                    {% if report.is_approved %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                                            <i class="fas fa-check-circle me-1"></i> معتمد
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill">
+                                            <i class="fas fa-clock me-1"></i> مسودة
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="small fw-semibold">{{ report.created_by.get_full_name|default:report.created_by.username }}</div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'damages:detail' report.loss_id %}"
+                                       class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                        <i class="fas fa-eye me-1"></i> تفاصيل
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fas fa-info-circle fa-2x mb-3 opacity-25"></i>
+                                    <p class="mb-0">لا توجد تقارير تالف مسجلة حالياً</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11pt;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header { border-bottom: 2px solid #2563eb; padding-bottom: 10mm; margin-bottom: 10mm; }
+        .store-name { font-size: 24pt; font-weight: bold; color: #2563eb; }
+        .invoice-title { font-size: 18pt; font-weight: bold; margin-top: 5mm; }
+        
+        .info-table { width: 100%; margin-bottom: 10mm; }
+        .info-table td { vertical-align: top; width: 50%; }
+        .label { color: #64748b; font-size: 9pt; font-weight: bold; text-transform: uppercase; }
+        .value { font-size: 11pt; font-weight: bold; }
+        
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10mm; }
+        .items-table th { background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0; padding: 3mm; text-align: right; font-size: 10pt; }
+        .items-table td { border-bottom: 1px solid #e2e8f0; padding: 3mm; }
+        
+        .totals-section { float: left; width: 300px; margin-top: 5mm; }
+        .total-row { display: flex; justify-content: space-between; padding: 2mm 0; border-bottom: 1px solid #f1f5f9; }
+        .grand-total { border-top: 2px solid #2563eb; color: #2563eb; font-size: 14pt; font-weight: bold; padding-top: 3mm; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; border-top: 1px solid #e2e8f0; padding-top: 5mm; font-size: 9pt; text-align: center; color: #64748b; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="store-name">{{ settings.site_name|default:"POS SYSTEM" }}</div>
+            <div class="invoice-title">فاتورة مشتريات (توريد)</div>
+        </div>
+        <table class="info-table">
+            <tr>
+                <td>
+                    <div class="label">المورد:</div>
+                    <div class="value">{{ invoice.supplier.name }}</div>
+                    <div class="value" style="font-weight: normal;">{{ invoice.supplier.phone }}</div>
+                    <div class="value" style="font-weight: normal;">{{ invoice.supplier.address|default:"" }}</div>
+                </td>
+                <td style="text-align: left;">
+                    <div class="label">رقم الفاتورة:</div>
+                    <div class="value">#{{ invoice.invoice_id }}</div>
+                    <div class="label" style="margin-top: 3mm;">التاريخ:</div>
+                    <div class="value">{{ invoice.created_at|date:"Y-m-d H:i" }}</div>
+                </td>
+            </tr>
+        </table>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الكتاب / الصنف</th>
+                    <th style="text-align: center;">الكمية</th>
+                    <th style="text-align: left;">سعر الوحدة</th>
+                    <th style="text-align: left;">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items.all %}
+                    <tr>
+                        <td style="font-size: 9pt; color: #64748b;">{{ forloop.counter }}</td>
+                        <td>
+                            <div style="font-weight: bold;">{{ item.product.name }}</div>
+                            {% if item.is_package %}
+                                <div style="font-size: 9pt; color: #2563eb; margin-top: 1mm;">
+                                    نظام العبوة: {{ item.package_qty|floatformat:2 }} × {{ item.pieces_per_package|floatformat:2 }} قطعة
+                                    (سعر العبوة: {{ item.package_purchase_price|floatformat:2 }})
+                                </div>
+                            {% endif %}
+                            <div style="font-size: 8pt; color: #64748b;">
+                                معرف المنتج: {{ item.product.product_id }} | ربح: {{ item.profit_margin|floatformat:1 }}%
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="font-weight: bold;">{{ item.quantity|floatformat:0 }}</div>
+                            <div style="font-size: 8pt; color: #64748b;">قطعة</div>
+                        </td>
+                        <td style="text-align: left;">
+                            <div>{{ item.unit_price|floatformat:2 }}</div>
+                            <div style="font-size: 8pt; color: #64748b;">للقطعة</div>
+                        </td>
+                        <td style="text-align: left;">
+                            <div style="font-weight: bold; color: #2563eb;">{{ item.total_price|floatformat:2 }}</div>
+                            {% if item.tax > 0 %}
+                                <div style="font-size: 8pt; color: #64748b;">شامل ضريبة {{ item.tax|floatformat:0 }}%</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="overflow: hidden;">
+            <div class="totals-section" style="text-align: left;">
+                <div class="total-row">
+                    <span style="font-weight: bold;">الإجمالي:</span>
+                    <span>{{ invoice.total_amount|floatformat:2 }} SAR</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>الإجمالي النهائي:</span>
+                    <span>{{ invoice.total_amount|floatformat:2 }} SAR</span>
+                </div>
+            </div>
+        </div>
+        {% if invoice.notes %}
+            <div style="margin-top: 10mm;
+                        padding: 5mm;
+                        background-color: #f8fafc;
+                        border-radius: 5px">
+                <div class="label">ملاحظات:</div>
+                <div style="font-size: 10pt;">{{ invoice.notes }}</div>
+            </div>
+        {% endif %}
+        <div class="footer">طبعت بواسطة: {{ user.get_full_name|default:user.username }} في {{ now|date:"Y-m-d H:i" }}</div>
+    </body>
+</html>

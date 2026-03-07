@@ -138,7 +138,20 @@ class InvoiceListView(LoginRequiredMixin, ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        return super().get_queryset().select_related('customer', 'cashier').order_by('-created_at')
+        queryset = super().get_queryset().select_related('customer', 'cashier')
+        sort = self.request.GET.get('sort')
+        direction = self.request.GET.get('dir', 'desc')
+        
+        if sort:
+            valid_sorts = ['invoice_id', 'customer__name', 'created_at', 'payment_method', 'total_amount', 'status']
+            if sort in valid_sorts:
+                if direction == 'desc':
+                    sort = f"-{sort}"
+                queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('-created_at')
+
+        return queryset
 
 @method_decorator(role_required(allowed_roles=['admin', 'cashier']), name='dispatch')
 class CustomerListView(LoginRequiredMixin, ListView):
@@ -150,9 +163,22 @@ class CustomerListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         q = self.request.GET.get('q')
+        sort = self.request.GET.get('sort')
+        direction = self.request.GET.get('dir', 'asc')
+
         if q:
             queryset = queryset.filter(Q(name__icontains=q) | Q(phone__icontains=q))
-        return queryset.order_by('name')
+
+        if sort:
+            valid_sorts = ['name', 'phone', 'email', 'balance_due', 'created_at']
+            if sort in valid_sorts:
+                if direction == 'desc':
+                    sort = f"-{sort}"
+                queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('name')
+
+        return queryset
 
 @method_decorator(role_required(allowed_roles=['admin', 'cashier']), name='dispatch')
 class CustomerCreateView(LoginRequiredMixin, CreateView):

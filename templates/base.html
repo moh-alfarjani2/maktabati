@@ -10,204 +10,207 @@
         <title>
             {% block title %}نظام إدارة المكتبة{% endblock %}
         </title>
-        <!-- Google Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap"
-              rel="stylesheet">
-        <!-- Bootstrap 5 CSS RTL -->
-        <link rel="stylesheet"
-              href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-        <!-- Font Awesome -->
-        <link rel="stylesheet"
-              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-        <!-- Custom CSS -->
-        <link rel="stylesheet" href="{% static 'css/style.css' %}">
-        {% block extra_css %}{% endblock %}
-    </head>
-    <body>
-        <!-- Preloader (High-End Spinner only, no text) -->
-        <div id="preloader">
-            <div class="premium-spinner"></div>
-        </div>
-        <div id="wrapper" class="loading">
-            <!-- Main Navbar (Top) -->
-            <nav class="navbar navbar-expand-md navbar-dark bg-dark main-navbar-top sticky-top shadow-sm">
-                <div class="container-fluid">
-                    <a class="navbar-brand d-flex align-items-center me-3"
-                       href="{% url 'dashboard' %}">
-                        <i class="fas fa-book-open me-2 text-primary"></i>
-                        <span class="fw-bold">مكتبتي</span>
-                    </a>
-                    <!-- Mobile Toggle (Offcanvas) -->
-                    <button class="navbar-toggler border-0 shadow-none"
-                            type="button"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#mobileMenu">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="collapse navbar-collapse d-lg-flex justify-content-between align-items-center"
-                         id="mainNavbar">
-                        <ul class="navbar-nav mb-2 mb-lg-0 nav-compact" id="dynamicNavItems">
-                            {% for item in navbar_items %}
-                                <li class="nav-item"
-                                    data-priority="{{ item.priority }}"
-                                    data-url-name="{{ item.url }}">
-                                    <a class="nav-link {% if item.url in request.path or request.resolver_match.url_name == item.url %}active{% endif %}"
-                                       href="{% url item.url %}">
-                                        <i class="{{ item.icon }}"></i> {{ item.name }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                            <!-- Dynamic 'More' Dropdown (Hidden by default, used by JS) -->
-                            <li class="nav-item dropdown d-none" id="dynamicMoreDropdown">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#"
-                                   id="moreDropdown"
-                                   role="button"
-                                   data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-h"></i> المزيد
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-dark shadow-lg dropdown-menu-end"
-                                    id="moreDropdownItems">
-                                    <!-- Moved items will appear here -->
-                                </ul>
-                            </li>
-                        </ul>
-                        <!-- User Profile Dropdown -->
-                        <ul class="navbar-nav ps-3 border-start" id="userProfileDropdown">
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center"
-                                   href="#"
-                                   id="userDropdown"
-                                   role="button"
-                                   data-bs-toggle="dropdown">
-                                    <span class="me-2 small">{{ user.full_name|default:user.username }}</span>
-                                    <i class="fas fa-user-circle fa-lg"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow-lg">
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i> الملف الشخصي</a>
-                                    </li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item text-danger"
-                                           href="#"
-                                           data-bs-toggle="modal"
-                                           data-bs-target="#logoutModal">
-                                            <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+        <!-- Favicon -->
+        <link rel="icon"
+              href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+            <!-- Google Fonts -->
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap"
+                  rel="stylesheet">
+            <!-- Bootstrap 5 CSS RTL -->
+            <link rel="stylesheet"
+                  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+            <!-- Font Awesome -->
+            <link rel="stylesheet"
+                  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+            <!-- Custom CSS -->
+            <link rel="stylesheet" href="{% static 'css/style.css' %}">
+            {% block extra_css %}{% endblock %}
+        </head>
+        <body>
+            <!-- Preloader (High-End Spinner only, no text) -->
+            <div id="preloader">
+                <div class="premium-spinner"></div>
+            </div>
+            <div id="wrapper" class="loading">
+                <!-- Main Navbar (Top) -->
+                <nav class="navbar navbar-expand-md navbar-dark bg-dark main-navbar-top sticky-top shadow-sm">
+                    <div class="container-fluid">
+                        <a class="navbar-brand d-flex align-items-center me-3"
+                           href="{% url 'dashboard' %}">
+                            <i class="fas fa-book-open me-2 text-primary"></i>
+                            <span class="fw-bold">مكتبتي</span>
+                        </a>
+                        <!-- Mobile Toggle (Offcanvas) -->
+                        <button class="navbar-toggler border-0 shadow-none"
+                                type="button"
+                                data-bs-toggle="offcanvas"
+                                data-bs-target="#mobileMenu">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="collapse navbar-collapse d-lg-flex justify-content-between align-items-center"
+                             id="mainNavbar">
+                            <ul class="navbar-nav mb-2 mb-lg-0 nav-compact" id="dynamicNavItems">
+                                {% for item in navbar_items %}
+                                    <li class="nav-item"
+                                        data-priority="{{ item.priority }}"
+                                        data-url-name="{{ item.url }}">
+                                        <a class="nav-link {% if item.url in request.path or request.resolver_match.url_name == item.url %}active{% endif %}"
+                                           href="{% url item.url %}">
+                                            <i class="{{ item.icon }}"></i> {{ item.name }}
                                         </a>
                                     </li>
-                                </ul>
-                            </li>
-                        </ul>
+                                {% endfor %}
+                                <!-- Dynamic 'More' Dropdown (Hidden by default, used by JS) -->
+                                <li class="nav-item dropdown d-none" id="dynamicMoreDropdown">
+                                    <a class="nav-link dropdown-toggle"
+                                       href="#"
+                                       id="moreDropdown"
+                                       role="button"
+                                       data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-h"></i> المزيد
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark shadow-lg dropdown-menu-end"
+                                        id="moreDropdownItems">
+                                        <!-- Moved items will appear here -->
+                                    </ul>
+                                </li>
+                            </ul>
+                            <!-- User Profile Dropdown -->
+                            <ul class="navbar-nav ps-3 border-start" id="userProfileDropdown">
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle d-flex align-items-center"
+                                       href="#"
+                                       id="userDropdown"
+                                       role="button"
+                                       data-bs-toggle="dropdown">
+                                        <span class="me-2 small">{{ user.full_name|default:user.username }}</span>
+                                        <i class="fas fa-user-circle fa-lg"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow-lg">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i> الملف الشخصي</a>
+                                        </li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-danger"
+                                               href="#"
+                                               data-bs-toggle="modal"
+                                               data-bs-target="#logoutModal">
+                                                <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-            </nav>
-            <!-- Mobile Menu (Offcanvas) -->
-            <div class="offcanvas offcanvas-start bg-dark text-white"
-                 tabindex="-1"
-                 id="mobileMenu">
-                <div class="offcanvas-header border-bottom border-secondary">
-                    <h5 class="offcanvas-title d-flex align-items-center">
-                        <i class="fas fa-book-open me-2 text-primary"></i> مكتبتي
-                    </h5>
-                    <button type="button"
-                            class="btn-close btn-close-white ripple-none"
-                            data-bs-dismiss="offcanvas"></button>
-                </div>
-                <div class="offcanvas-body p-0">
-                    <div class="list-group list-group-flush" id="offcanvasNavItems">
-                        {% for item in navbar_items %}
-                            <a href="{% url item.url %}"
-                               class="list-group-item list-group-item-action border-0 py-3 {% if item.url in request.path or request.resolver_match.url_name == item.url %}active{% endif %}">
-                                <i class="{{ item.icon }} me-3 text-primary"></i> {{ item.name }}
-                            </a>
-                        {% endfor %}
+                </nav>
+                <!-- Mobile Menu (Offcanvas) -->
+                <div class="offcanvas offcanvas-start bg-dark text-white"
+                     tabindex="-1"
+                     id="mobileMenu">
+                    <div class="offcanvas-header border-bottom border-secondary">
+                        <h5 class="offcanvas-title d-flex align-items-center">
+                            <i class="fas fa-book-open me-2 text-primary"></i> مكتبتي
+                        </h5>
+                        <button type="button"
+                                class="btn-close btn-close-white ripple-none"
+                                data-bs-dismiss="offcanvas"></button>
                     </div>
-                    <!-- User Section in Mobile -->
-                    <div class="mt-auto border-top p-3 bg-light">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-user-circle fa-2x me-2 text-secondary"></i>
-                            <div>
-                                <div class="fw-bold small">{{ user.full_name|default:user.username }}</div>
-                                <div class="text-muted small">المسؤول</div>
+                    <div class="offcanvas-body p-0">
+                        <div class="list-group list-group-flush" id="offcanvasNavItems">
+                            {% for item in navbar_items %}
+                                <a href="{% url item.url %}"
+                                   class="list-group-item list-group-item-action border-0 py-3 {% if item.url in request.path or request.resolver_match.url_name == item.url %}active{% endif %}">
+                                    <i class="{{ item.icon }} me-3 text-primary"></i> {{ item.name }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                        <!-- User Section in Mobile -->
+                        <div class="mt-auto border-top p-3 bg-light">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-user-circle fa-2x me-2 text-secondary"></i>
+                                <div>
+                                    <div class="fw-bold small">{{ user.full_name|default:user.username }}</div>
+                                    <div class="text-muted small">المسؤول</div>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'profile' %}"
+                                   class="btn btn-outline-primary btn-sm text-start">
+                                    <i class="fas fa-user-edit me-2"></i> الملف الشخصي
+                                </a>
+                                <a href="#"
+                                   class="btn btn-outline-danger btn-sm text-start"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+                                </a>
                             </div>
                         </div>
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'profile' %}"
-                               class="btn btn-outline-primary btn-sm text-start">
-                                <i class="fas fa-user-edit me-2"></i> الملف الشخصي
-                            </a>
-                            <a href="#"
-                               class="btn btn-outline-danger btn-sm text-start"
-                               data-bs-toggle="modal"
-                               data-bs-target="#logoutModal">
-                                <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
-                            </a>
+                    </div>
+                </div>
+                <!-- Page Content -->
+                <div id="content" class="full-width">
+                    <div class="container-fluid py-4">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                                     role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+                <!-- Scripts -->
+                <!-- Logout Confirmation Modal -->
+                <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header bg-danger text-white border-0">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-sign-out-alt me-2"></i> تأكيد تسجيل الخروج
+                                </h5>
+                                <button type="button"
+                                        class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body py-4 text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-question-circle fa-3x text-danger opacity-25"></i>
+                                </div>
+                                <h5>هل أنت متأكد من رغبتك في تسجيل الخروج؟</h5>
+                                <p class="text-muted mb-0">سيتم إنهاء الجلسة الحالية وتوجيهك لصفحة الدخول.</p>
+                            </div>
+                            <div class="modal-footer border-0">
+                                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">إلغاء</button>
+                                <form action="{% url 'logout' %}"
+                                      method="post"
+                                      id="logoutForm"
+                                      class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger px-4">تسجيل الخروج</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <script src="{% static 'js/navbar.js' %}"></script>
+                {% block extra_js %}{% endblock %}
             </div>
-            <!-- Page Content -->
-            <div id="content" class="full-width">
-                <div class="container-fluid py-4">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
-                                 role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    {% block content %}{% endblock %}
-                </div>
-            </div>
-            <!-- Scripts -->
-            <!-- Logout Confirmation Modal -->
-            <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-danger text-white border-0">
-                            <h5 class="modal-title">
-                                <i class="fas fa-sign-out-alt me-2"></i> تأكيد تسجيل الخروج
-                            </h5>
-                            <button type="button"
-                                    class="btn-close btn-close-white"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body py-4 text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-question-circle fa-3x text-danger opacity-25"></i>
-                            </div>
-                            <h5>هل أنت متأكد من رغبتك في تسجيل الخروج؟</h5>
-                            <p class="text-muted mb-0">سيتم إنهاء الجلسة الحالية وتوجيهك لصفحة الدخول.</p>
-                        </div>
-                        <div class="modal-footer border-0">
-                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">إلغاء</button>
-                            <form action="{% url 'logout' %}"
-                                  method="post"
-                                  id="logoutForm"
-                                  class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger px-4">تسجيل الخروج</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script src="{% static 'js/navbar.js' %}"></script>
-            {% block extra_js %}{% endblock %}
-        </div>
-        <!-- End Wrapper -->
-        <script>
+            <!-- End Wrapper -->
+            <script>
             // Preloader logic
             window.addEventListener('load', function() {
                 const preloader = document.getElementById('preloader');
@@ -219,6 +222,8 @@
                     wrapper.classList.remove('loading');
                 }, 300);
             });
-        </script>
-    </body>
-</html>
+            </script>
+            <!-- Table Sorting Script -->
+            <script src="{% static 'js/table-sort.js' %}"></script>
+        </body>
+    </html>

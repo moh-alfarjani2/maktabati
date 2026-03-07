@@ -25,9 +25,24 @@ class ProductListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         query = self.request.GET.get('q')
+        sort = self.request.GET.get('sort')
+        direction = self.request.GET.get('dir', 'asc')
+
+        queryset = Product.objects.all()
+
         if query:
-            return Product.objects.filter(name__icontains=query)
-        return Product.objects.all()
+            queryset = queryset.filter(name__icontains=query)
+
+        if sort:
+            valid_sorts = ['code', 'name', 'author', 'selling_price', 'current_stock', 'created_at']
+            if sort in valid_sorts:
+                if direction == 'desc':
+                    sort = f"-{sort}"
+                queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('-created_at')
+
+        return queryset
 
 @method_decorator(role_required(allowed_roles=['admin']), name='dispatch')
 class ProductCreateView(LoginRequiredMixin, CreateView):
