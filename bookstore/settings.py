@@ -62,10 +62,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bookstore.wsgi.application'
 
-# Database
+# Database (SQLite فقط للديمو)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # يمكنك استخدام PostgreSQL لاحقاً
+        'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
